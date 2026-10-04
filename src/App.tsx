@@ -253,7 +253,8 @@ export default function App() {
     // If it generated revenue, log transaction
     if (record.revenue && record.revenue > 0) {
       storage.addTransaction({
-        id: `tx-milk-${Date.now()}`,
+        id: `tx-milk-${record.id}`,
+        relatedRecordId: record.id,
         date: record.date,
         type: 'ingreso',
         category: 'venta_leche',
@@ -289,7 +290,8 @@ export default function App() {
     storage.addHealthRecord(record);
     if (record.cost && record.cost > 0) {
       storage.addTransaction({
-        id: `tx-health-${Date.now()}`,
+        id: `tx-health-${record.id}`,
+        relatedRecordId: record.id,
         date: record.date,
         type: 'egreso',
         category: 'compra_medicamentos',
