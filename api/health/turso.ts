@@ -1,7 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@libsql/client';
 
-export default async function handler(_req: VercelRequest, res: VercelResponse) {
+export default async function handler(_req: any, res: any) {
   try {
     const url = process.env.TURSO_DATABASE_URL;
     const authToken = process.env.TURSO_AUTH_TOKEN;
