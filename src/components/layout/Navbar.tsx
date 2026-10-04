@@ -142,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={onOpenSettings}
           className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
-          title="Configuración de Finca"
+          title="🏡 Datos de la finca"
         >
           <Settings className="w-4 h-4" />
         </button>
