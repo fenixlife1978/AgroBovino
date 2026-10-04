@@ -239,16 +239,38 @@ export default function App() {
   };
 
   const handleDeleteAnimal = (id: string) => {
+    const animal = animals.find(a => a.id === id);
+    if (!animal) return;
+
+    const dependencies: string[] = [];
+    if (milkRecords.some(r => r.animalId === id)) dependencies.push('Producción de leche');
+    if (weightRecords.some(r => r.animalId === id)) dependencies.push('Pesajes');
+    if (reproductionEvents.some(r => r.animalId === id)) dependencies.push('Reproducción');
+    if (healthRecords.some(r => r.animalId === id)) dependencies.push('Sanidad');
+    if (paddockNovelties.some(r => r.animalId === id || r.animalTag === animal.tagNumber)) dependencies.push('Novedades de campo');
+    if (transactions.some(t => t.relatedAnimalTag === animal.tagNumber)) dependencies.push('Transacciones financieras');
+
+    if (dependencies.length > 0) {
+      window.alert('No se puede eliminar ' + animal.tagNumber + ' porque conserva historial operativo en: ' + dependencies.join(', ') + '. Elimine/corrija primero los registros dependientes o mantenga el bovino en el censo para conservar su trazabilidad.');
+      return;
+    }
+
     if (window.confirm('¿Está seguro de eliminar este animal del censo?')) {
       storage.deleteAnimal(id);
       reloadData();
-      if (selectedAnimalForDetail?.id === id) {
-        setSelectedAnimalForDetail(null);
-      }
+      if (selectedAnimalForDetail?.id === id) setSelectedAnimalForDetail(null);
     }
   };
 
   const handleSaveMilkRecord = (record: MilkRecord) => {
+    if (record.animalId) {
+      const animal = animals.find(a => a.id === record.animalId);
+      if (animal && isAnimalInWithdrawal(animal.withdrawalEndDate) && record.destination !== 'descarte_antibiotico') {
+        window.alert('No se puede registrar esta leche como destinada a venta/consumo mientras ' + animal.tagNumber + ' esté en periodo de retiro hasta ' + animal.withdrawalEndDate + '. Seleccione destino de descarte por antibiótico o registre el ordeño cuando finalice el retiro.');
+        return;
+      }
+    }
+
     storage.addMilkRecord(record);
     // If it generated revenue, log transaction
     if (record.revenue && record.revenue > 0) {
@@ -274,6 +296,12 @@ export default function App() {
   };
 
   const handleSaveReproductionEvent = (event: ReproductionEvent) => {
+    if (event.eventType === 'servicio_ia') {
+      const straw = semenStraws.find(s => s.bullName === event.sireTagOrStraw || s.registrationCode === event.sireTagOrStraw);
+      if (!straw) { window.alert('No se pudo identificar la pajilla de semen seleccionada.'); return; }
+      if (straw.quantityAvailable <= 0) { window.alert('La pajilla de ' + straw.bullName + ' no tiene existencias disponibles.'); return; }
+      storage.saveSemenStraws(semenStraws.map(s => s.id === straw.id ? { ...s, quantityAvailable: s.quantityAvailable - 1 } : s));
+    }
     storage.addReproductionEvent(event);
     reloadData();
   };
@@ -314,6 +342,21 @@ export default function App() {
   };
 
   const handleDeletePasture = (id: string) => {
+    const pasture = pastures.find(p => p.id === id);
+    if (!pasture) return;
+    const refs: string[] = [];
+    const animalCount = animals.filter(a => a.pastureId === id).length;
+    const noveltyCount = paddockNovelties.filter(n => n.pastureId === id).length;
+    const rotationCount = herdRotations.filter(r => r.sourcePastureId === id || r.targetPastureId === id).length;
+    const auditCount = rodeoAudits.filter(r => r.pastureId === id).length;
+    if (animalCount) refs.push(animalCount + ' animal(es) asignado(s)');
+    if (noveltyCount) refs.push(noveltyCount + ' novedad(es)');
+    if (rotationCount) refs.push(rotationCount + ' rotación(es)');
+    if (auditCount) refs.push(auditCount + ' inspección(es)');
+    if (refs.length > 0) {
+      window.alert('No se puede eliminar el potrero ' + pasture.code + ' porque conserva referencias: ' + refs.join(', ') + '. Esto evita dejar animales o historial de campo huérfanos.');
+      return;
+    }
     if (window.confirm('¿Está seguro de eliminar este potrero?')) {
       storage.deletePasture(id);
       reloadData();
