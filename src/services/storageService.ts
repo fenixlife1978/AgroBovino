@@ -69,37 +69,103 @@ class StorageService {
 
   private scheduleCloudSync(): void {
     if (this.cloudHydrating || typeof window === 'undefined') return;
+    this.pendingCloudSync = true;
     if (this.cloudSyncTimer) clearTimeout(this.cloudSyncTimer);
     this.cloudSyncTimer = setTimeout(() => { void this.syncToCloud(); }, 750);
   }
 
-  private async syncToCloud(): Promise<boolean> {
+  private attachOnlineRetry(): void {
+    if (this.onlineHandlerAttached || typeof window === 'undefined') return;
+    window.addEventListener('online', () => {
+      if (this.pendingCloudSync) void this.syncToCloud();
+      else void this.hydrateFromCloud();
+    });
+    this.onlineHandlerAttached = true;
+  }
+
+  private hasLocalCache(): boolean {
+    if (typeof window === 'undefined') return false;
+    return Object.values(STORAGE_KEYS).some(key => localStorage.getItem(key) !== null);
+  }
+
+  private mergePendingWithCanonical(canonical: Record<string, unknown>): Record<string, unknown> {
+    const local = JSON.parse(this.exportFullBackup()) as Record<string, unknown>;
+    if (!this.cloudBaseState) return local;
+    const merged: Record<string, unknown> = { ...canonical };
+    for (const key of Object.keys(local)) {
+      if (key === 'exportedAt') continue;
+      if (JSON.stringify(local[key]) !== JSON.stringify(this.cloudBaseState[key])) {
+        merged[key] = local[key];
+      }
+    }
+    return merged;
+  }
+
+  private async fetchCloudState(): Promise<{ state: Record<string, unknown>; version: number } | null> {
     try {
-      const state = JSON.parse(this.exportFullBackup());
-      const response = await fetch('/api/state', {
+      const response = await fetch(`/api/state?farmId=${encodeURIComponent(this.getCloudKey())}`, { cache: 'no-store' });
+      if (!response.ok) return null;
+      const payload = await response.json();
+      if (!payload?.found || !payload.state) return null;
+      return {
+        state: payload.state as Record<string, unknown>,
+        version: Number.isInteger(payload.version) ? payload.version : 0
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async syncToCloud(): Promise<boolean> {
+    if (this.syncInFlight || typeof window === 'undefined') return false;
+    this.syncInFlight = true;
+    try {
+      let state = JSON.parse(this.exportFullBackup());
+      let response = await fetch('/api/state', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ farmId: this.getCloudKey(), state, version: this.cloudVersion }),
       });
-      if (!response.ok) {
-        if (response.status === 409) {
-          console.warn('AgroBovino: conflicto de versión en Turso; se descarta el snapshot local en conflicto y se recarga la versión canónica de Turso.');
-          await this.hydrateFromCloud();
-        } else {
-          console.warn('AgroBovino: no se pudo sincronizar con Turso.', response.status);
+
+      if (response.status === 409) {
+        const canonical = await this.fetchCloudState();
+        if (canonical) {
+          state = this.mergePendingWithCanonical(canonical.state);
+          this.importFullBackup(JSON.stringify(state), false);
+          this.cloudVersion = canonical.version;
+          response = await fetch('/api/state', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ farmId: this.getCloudKey(), state, version: this.cloudVersion }),
+          });
         }
-        return;
       }
+
+      if (!response.ok) {
+        console.warn('AgroBovino: Turso no está disponible; los cambios quedan en cola local hasta recuperar la conexión.', response.status);
+        this.pendingCloudSync = true;
+        return false;
+      }
+
       const saved = await response.json();
       if (Number.isInteger(saved?.version)) this.cloudVersion = saved.version;
+      this.cloudBaseState = state;
+      this.pendingCloudSync = false;
       return true;
     } catch (error) {
-      console.warn('AgroBovino: sincronización cloud no disponible; se mantiene modo local.', error);
+      console.warn('AgroBovino: conexión intermitente; los cambios quedan en cola local.', error);
+      this.pendingCloudSync = true;
       return false;
+    } finally {
+      this.syncInFlight = false;
+      if (this.pendingCloudSync && typeof window !== 'undefined' && navigator.onLine !== false) {
+        if (this.cloudSyncTimer) clearTimeout(this.cloudSyncTimer);
+        this.cloudSyncTimer = setTimeout(() => { void this.syncToCloud(); }, 3000);
+      }
     }
   }
 
-  async initializeCloud(): Promise<'hydrated' | 'initialized' | 'failed'> {
+  async initializeCloud(): Promise<'hydrated' | 'initialized' | 'offline' | 'failed'> {
     if (typeof window === 'undefined') return 'failed';
     this.cloudReadMissing = false;
     this.cloudReadFailed = false;
