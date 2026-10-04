@@ -64,7 +64,7 @@ class StorageService {
     this.cloudSyncTimer = setTimeout(() => { void this.syncToCloud(); }, 750);
   }
 
-  private async syncToCloud(): Promise<void> {
+  private async syncToCloud(): Promise<boolean> {
     try {
       const state = JSON.parse(this.exportFullBackup());
       const response = await fetch('/api/state', {
@@ -83,8 +83,10 @@ class StorageService {
       }
       const saved = await response.json();
       if (Number.isInteger(saved?.version)) this.cloudVersion = saved.version;
+      return true;
     } catch (error) {
       console.warn('AgroBovino: sincronización cloud no disponible; se mantiene modo local.', error);
+      return false;
     }
   }
 
@@ -93,8 +95,8 @@ class StorageService {
     try {
       const hydrated = await this.hydrateFromCloud();
       if (hydrated) return 'hydrated';
-      await this.syncToCloud();
-      return 'initialized';
+      const initialized = await this.syncToCloud();
+      return initialized ? 'initialized' : 'failed';
     } catch (error) {
       console.warn('AgroBovino: no se pudo inicializar la persistencia cloud.', error);
       return 'failed';
