@@ -26,7 +26,11 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === 'PATCH') {
-      if (username === 'admin' && req.body?.active === false) return res.status(400).json({ error: 'El administrador semilla no se puede desactivar.' });
+      if (req.body?.active === false) {
+        const current = await listUsers();
+        const target = current.find(user => user.username === username);
+        if (target?.role === 'admin' && current.filter(user => user.role === 'admin' && user.active).length <= 1) return res.status(400).json({ error: 'No se puede desactivar al último administrador.' });
+      }
       if (typeof req.body?.active === 'boolean') await setUserActive(username, req.body.active);
       if (req.body?.password !== undefined) {
         const password = String(req.body.password);
