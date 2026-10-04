@@ -270,7 +270,7 @@ export const PasturesView: React.FC<PasturesViewProps> = ({
             className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm shadow-sky-600/20 transition-all cursor-pointer"
           >
             <Droplets className="w-4 h-4" />
-            <span>Ronda de Agua & Cercas</span>
+            <span>🐂 Rodeo / Auditoría</span>
           </button>
 
           <button
@@ -306,7 +306,7 @@ export const PasturesView: React.FC<PasturesViewProps> = ({
           }`}
         >
           <MoveRight className="w-4 h-4" />
-          <span>🤠 Rotaciones & Lotes en Manga ({farmLots.length} Lotes)</span>
+          <span>🔄 Rotaciones & Lotes en Manga ({farmLots.length} Lotes)</span>
         </button>
 
         <button
@@ -318,7 +318,7 @@ export const PasturesView: React.FC<PasturesViewProps> = ({
           }`}
         >
           <AlertTriangle className="w-4 h-4" />
-          <span>📋 Libro de Novedades de Recorrida ({novelties.length})</span>
+          <span>📝 Libro de Novedades de Recorrida ({novelties.length})</span>
           {novelties.filter(n => n.status !== 'resuelto').length > 0 && (
             <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full">
               {novelties.filter(n => n.status !== 'resuelto').length}
@@ -335,7 +335,7 @@ export const PasturesView: React.FC<PasturesViewProps> = ({
           }`}
         >
           <Droplets className="w-4 h-4" />
-          <span>💧 Ronda de Agua, Cercas & Saladeros</span>
+          <span>🐂 Rodeo / Auditoría de Campo</span>
         </button>
       </div>
 
