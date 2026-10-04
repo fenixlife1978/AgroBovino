@@ -384,6 +384,12 @@ class StorageService {
   deleteMilkRecord(id: string): void {
     const records = this.getMilkRecords().filter(r => r.id !== id);
     this.saveMilkRecords(records);
+
+    // Una venta de leche automática pertenece al registro de ordeño.
+    // Al eliminar el origen, también se elimina su asiento automático para
+    // evitar que Finanzas conserve un ingreso que ya no existe en Producción.
+    const transactions = this.getTransactions().filter(t => t.relatedRecordId !== id);
+    this.saveTransactions(transactions);
   }
 
   // Weight Records
@@ -448,6 +454,11 @@ class StorageService {
         animal.lastCalvingDate = event.date;
         animal.totalLactations = (animal.totalLactations || 0) + 1;
         animal.productionStatus = animal.purpose === 'leche' || animal.purpose === 'doble_proposito' ? 'ordeño' : 'crecimiento';
+      } else if (event.eventType === 'aborto') {
+        // Un aborto termina la gestación activa: no debe quedar una fecha
+        // estimada de parto ni el estado "gestante".
+        animal.reproductiveStatus = 'vacia';
+        animal.estimatedCalvingDate = undefined;
       } else if (event.eventType === 'secado') {
         animal.reproductiveStatus = 'en_secado';
         animal.productionStatus = 'seca';
