@@ -747,6 +747,37 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           </div>
         )}
 
+        {/* REPORT 5: REPRODUCTIVE KPI */}
+        {reportType === 'reproductive_kpi' && (
+          <div className="space-y-6">
+            {(() => {
+              const females = animals.filter(a => a.sex === 'F');
+              const services = reproductionEvents.filter(e => e.eventType === 'servicio_ia' || e.eventType === 'monta_natural');
+              const pregnancies = reproductionEvents.filter(e => (e.eventType === 'palpacion' || e.eventType === 'ecografia') && e.pregnancyStatus === 'positivo');
+              const abortions = reproductionEvents.filter(e => e.eventType === 'aborto');
+              const calvings = reproductionEvents.filter(e => e.eventType === 'parto');
+              const pregnancyRate = services.length ? ((pregnancies.length / services.length) * 100).toFixed(1) : '0.0';
+              const abortionRate = pregnancies.length ? ((abortions.length / pregnancies.length) * 100).toFixed(1) : '0.0';
+              return (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200"><span className="text-[10px] text-slate-500 block uppercase font-bold">Hembras</span><span className="text-2xl font-black">{females.length}</span></div>
+                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200"><span className="text-[10px] text-slate-500 block uppercase font-bold">Servicios</span><span className="text-2xl font-black">{services.length}</span></div>
+                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200"><span className="text-[10px] text-slate-500 block uppercase font-bold">Diagnósticos +</span><span className="text-2xl font-black text-emerald-700">{pregnancies.length}</span></div>
+                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200"><span className="text-[10px] text-slate-500 block uppercase font-bold">Preñez/Servicio</span><span className="text-2xl font-black text-purple-700">{pregnancyRate}%</span></div>
+                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200"><span className="text-[10px] text-slate-500 block uppercase font-bold">Partos</span><span className="text-2xl font-black text-sky-700">{calvings.length}</span></div>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="p-4 border-b border-slate-100"><h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">Resumen reproductivo por bovino</h4></div>
+                    <div className="overflow-x-auto"><table className="w-full text-xs text-left"><thead className="bg-slate-50 text-[10px] uppercase"><tr><th className="p-3">Arete</th><th className="p-3">Estado</th><th className="p-3">Último servicio</th><th className="p-3">Parto estimado</th><th className="p-3">Último parto</th></tr></thead>
+                    <tbody className="divide-y divide-slate-100">{females.map(a => <tr key={a.id}><td className="p-3 font-mono font-bold">{a.tagNumber}</td><td className="p-3 font-semibold">{a.reproductiveStatus}</td><td className="p-3">{a.lastServiceDate || '—'}</td><td className="p-3">{a.estimatedCalvingDate || '—'}</td><td className="p-3">{a.lastCalvingDate || '—'}</td></tr>)}</tbody></table></div>
+                  </div>
+                  <div className="text-xs text-slate-600">Tasa de aborto observada sobre diagnósticos positivos registrados: <strong>{abortionRate}%</strong>. Estos indicadores dependen de la calidad y completitud de los eventos registrados.</div>
+                </>
+              );
+            })()}
+          </div>
+        )}
         {/* Footer */}
         <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-400 font-mono">
           <div className="flex items-center gap-2">
