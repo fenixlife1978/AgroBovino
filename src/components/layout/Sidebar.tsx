@@ -1,6 +1,6 @@
 import React from 'react';
 import type { UserRole } from '../../auth';
-import { LayoutDashboard, X } from 'lucide-react';
+import { LayoutDashboard, FileSpreadsheet, Calculator, X } from 'lucide-react';
 
 export type NavView = 
   | 'dashboard'
