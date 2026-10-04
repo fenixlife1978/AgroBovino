@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     const db = client();
-    await db.execute('DELETE FROM app_state');
+    await db.execute('DROP TABLE IF EXISTS app_state');
     await db.execute('DROP TABLE IF EXISTS app_users');
     await db.execute('DROP TABLE IF EXISTS app_settings');
     await ensureSeedAdmin();
