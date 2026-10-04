@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LockKeyhole, UserRound, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { LockKeyhole, UserRound, ShieldCheck, Eye, EyeOff, Shield } from 'lucide-react';
 import type { AuthUser } from '../../auth';
 import { login } from '../../auth';
 
@@ -10,6 +10,7 @@ interface LoginPageProps {
 export const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'admin' | 'vaquero'>('admin');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +20,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
     setError('');
     setLoading(true);
     try {
-      const user = await login(username, password);
+      const user = await login(username, password, role);
       onAuthenticated(user);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión.');
@@ -44,6 +45,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
               <h2 className="font-bold text-slate-900">Iniciar sesión</h2>
               <p className="text-xs text-slate-500">Ingrese la cuenta que le asignó el administrador</p>
             </div>
+          </div>
+
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Rol de acceso</label>
+          <div className="relative mb-4">
+            <Shield className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as 'admin' | 'vaquero')}
+              className="w-full h-11 rounded-xl border border-slate-200 pl-10 pr-3 bg-white text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+              required
+            >
+              <option value="admin">Administrador</option>
+              <option value="vaquero">Vaquero</option>
+            </select>
           </div>
 
           <label className="block text-sm font-semibold text-slate-700 mb-2">Usuario</label>
