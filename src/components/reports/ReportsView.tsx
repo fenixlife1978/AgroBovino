@@ -14,7 +14,7 @@ import {
   Filter,
   Award
 } from 'lucide-react';
-import { Animal, Pasture, FarmProfile, HealthRecord } from '../../types/livestock';
+import { Animal, Pasture, FarmProfile, HealthRecord, ReproductionEvent } from '../../types/livestock';
 import { formatAge, getAnimalUGM, calculatePastureCarryingCapacity } from '../../utils/livestockCalculators';
 import { exportElementToPdf } from '../../utils/pdfExport';
 
@@ -23,6 +23,7 @@ interface ReportsViewProps {
   pastures: Pasture[];
   farm: FarmProfile;
   healthRecords: HealthRecord[];
+  reproductionEvents: ReproductionEvent[];
 }
 
 type ReportKey = 'official_census' | 'mobilization_guide' | 'sanitary_cert' | 'pasture_audit' | 'reproductive_kpi';
@@ -31,7 +32,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   animals,
   pastures,
   farm,
-  healthRecords
+  healthRecords,
+  reproductionEvents
 }) => {
   const [reportType, setReportType] = useState<ReportKey>('official_census');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -164,6 +166,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             Certificado Sanitario & Hato Libre
           </button>
           <button
+            onClick={() => setReportType('reproductive_kpi')}
+            className={`px-3.5 py-2 rounded-lg font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              reportType === 'reproductive_kpi' ? 'bg-white text-emerald-800 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Award className="w-3.5 h-3.5 text-emerald-600" />
+            Indicadores Reproductivos
+          </button>
+          <button
             onClick={() => setReportType('pasture_audit')}
             className={`px-3.5 py-2 rounded-lg font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
               reportType === 'pasture_audit' ? 'bg-white text-emerald-800 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
@@ -272,6 +283,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               {reportType === 'mobilization_guide' && 'GUÍA SANITARIA DE MOVILIZACIÓN INTERNA (GSMI)'}
               {reportType === 'sanitary_cert' && 'CERTIFICADO OFICIAL DE SANIDAD ANIMAL & BIOSEGURIDAD'}
               {reportType === 'pasture_audit' && 'INFORME TÉCNICO DE CAPACIDAD DE CARGA & FORRAJES'}
+              {reportType === 'reproductive_kpi' && 'INFORME REPRODUCTIVO Y GESTIÓN DE HATO'}
             </h2>
             <div className="text-xs text-slate-600 mt-1 font-medium flex flex-wrap items-center gap-x-3 gap-y-1">
               <span>Predio: <strong className="text-slate-900">{farm.name}</strong></span>
@@ -558,7 +570,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 Certificación Oficial de Hato Libre & Sanidad Preventiva
               </div>
               <p className="leading-relaxed text-slate-700 font-medium">
-                Se certifica que el predio pecuario <strong>{farm.name}</strong>, con registro oficial <strong>{farm.legalId}</strong>, ubicado en <strong>{farm.location}</strong>, cumple a cabalidad con los ciclos oficiales de vacunación obligatoria, inspección zootécnica y medidas de bioseguridad, encontrándose libre de sintomatología vesicular y enfermedades de control oficial.
+                Este documento es un reporte técnico generado a partir de los registros cargados en AgroBovino para el predio <strong>{farm.name}</strong>, con registro <strong>{farm.legalId}</strong>, ubicado en <strong>{farm.location}</strong>. La información no sustituye una certificación sanitaria oficial ni acredita por sí sola el cumplimiento de programas regulatorios.
               </p>
             </div>
 
@@ -692,8 +704,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {pastures.map(p => {
-                      const estimatedKgM2 = 1.2;
-                      const capacityUGM = p.carryingCapacityUGM || (p.areaHa * 1.8);
+                      const estimatedKgM2 = p.forageEstimateKgM2 || 0;
+                      const capacityUGM = p.carryingCapacityUGM || 0;
                       return (
                         <tr key={p.id} className="hover:bg-slate-50">
                           <td className="p-3 font-bold text-slate-900">{p.name}</td>
@@ -735,14 +747,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           </div>
         )}
 
-        {/* Official Footer Verification Stamp */}
+        {/* Footer */}
         <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-400 font-mono">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Documento generado con firma electrónica y hash zootécnico SHA-256 verificado.</span>
+            <span>Documento generado por AgroBovino a partir de los registros almacenados en el sistema.</span>
           </div>
           <div>
-            Hacienda ERP Pro • Licencia Oficial: <strong>{farm.legalId}</strong>
+            Predio: <strong>{farm.legalId}</strong>
           </div>
         </div>
       </div>
