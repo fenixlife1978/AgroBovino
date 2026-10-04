@@ -78,11 +78,28 @@ export const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({
     reader.readAsText(file);
   };
 
-  const handleResetDemo = () => {
-    if (window.confirm('¿Está seguro de reiniciar a los datos de demostración? Se reestablecerá todo el censo y registros.')) {
-      storage.resetToDemoData();
-      onDataReset();
-      onClose();
+  const handleFactoryReset = async () => {
+    const first = window.confirm('REINICIO DE FÁBRICA: se eliminarán todos los datos de la finca, usuarios y configuraciones de Turso. Esta acción no se puede deshacer. ¿Desea continuar?');
+    if (!first) return;
+    const second = window.confirm('Confirme nuevamente: se restaurará únicamente el administrador semilla y deberá iniciar sesión otra vez.');
+    if (!second) return;
+
+    try {
+      const response = await fetch('/api/admin/factory-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setImportStatus(data.error || 'No se pudo completar el reinicio de fábrica.');
+        return;
+      }
+      localStorage.clear();
+      setImportStatus('Reinicio de fábrica completado. Iniciando sesión nuevamente...');
+      setTimeout(() => window.location.reload(), 900);
+    } catch {
+      setImportStatus('No fue posible contactar al servidor para realizar el reinicio de fábrica.');
     }
   };
 
