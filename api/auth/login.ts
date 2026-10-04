@@ -1,4 +1,4 @@
-import { createSession, setSessionCookie, ensureSeedAdmin, verifyPassword, type UserRole } from '../_lib/auth';
+import { createSession, setSessionCookie, ensureSeedAdmin, authenticateSeedAdmin, type UserRole } from '../_lib/auth';
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -19,7 +19,10 @@ export default async function handler(req: any, res: any) {
   };
 
   const account = credentials[username];
-  if (!account?.password || password !== account.password) {
+  const valid = username === 'admin'
+    ? await authenticateSeedAdmin(password)
+    : Boolean(account?.password && password === account.password);
+  if (!account || !valid) {
     return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
   }
 
