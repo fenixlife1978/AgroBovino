@@ -46,8 +46,45 @@ export function getSession(req: any): SessionPayload | null {
 }
 export function setSessionCookie(res: any, token: string): void { res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`); }
 export function clearSessionCookie(res: any): void { res.setHeader('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`); }
-export function requireSession(req: any, res: any): SessionPayload | null { const session = getSession(req); if (!session) { res.status(401).json({ error: 'No autenticado', code: 'UNAUTHORIZED' }); return null; } return session; }
-export function requireAdmin(req: any, res: any): SessionPayload | null { const session = requireSession(req, res); if (!session) return null; if (session.role !== 'admin') { res.status(403).json({ error: 'Se requiere rol de administrador.', code: 'FORBIDDEN' }); return null; } return session; }
+export async function requireSession(req: any, res: any): Promise<SessionPayload | null> {
+  const session = getSession(req);
+  if (!session) {
+    res.status(401).json({ error: 'No autenticado', code: 'UNAUTHORIZED' });
+    return null;
+  }
+
+  // Sessions are signed, but the account status remains authoritative in Turso.
+  // This prevents a deactivated/deleted user from continuing to use a valid
+  // browser cookie until its 12-hour TTL expires.
+  try {
+    const db = getDb();
+    const result = await db.execute({
+      sql: 'SELECT role, active FROM app_users WHERE username = ? LIMIT 1',
+      args: [session.username],
+    });
+    const row = result.rows[0] as { role?: string; active?: number } | undefined;
+    if (!row || Number(row.active) !== 1 || row.role !== session.role) {
+      clearSessionCookie(res);
+      res.status(401).json({ error: 'La sesión ya no es válida. Inicie sesión nuevamente.', code: 'SESSION_REVOKED' });
+      return null;
+    }
+    return session;
+  } catch (error) {
+    console.error('Session validation error:', error);
+    res.status(503).json({ error: 'No se pudo validar la sesión contra Turso.', code: 'SESSION_VALIDATION_FAILED' });
+    return null;
+  }
+}
+
+export async function requireAdmin(req: any, res: any): Promise<SessionPayload | null> {
+  const session = await requireSession(req, res);
+  if (!session) return null;
+  if (session.role !== 'admin') {
+    res.status(403).json({ error: 'Se requiere rol de administrador.', code: 'FORBIDDEN' });
+    return null;
+  }
+  return session;
+}
 
 export function hashPassword(password: string, salt = randomBytes(16).toString('hex')): string { return `${salt}:${scryptSync(password, salt, 64).toString('hex')}`; }
 export function verifyPassword(password: string, stored: string): boolean {
