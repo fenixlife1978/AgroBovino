@@ -159,6 +159,12 @@ export async function deleteUser(username: string): Promise<void> {
   const row = target.rows[0] as { username?: string; role?: string } | undefined;
   if (!row?.username) throw new Error('El usuario no existe.');
 
+  if (row.role === 'admin' && row.username === 'admin') {
+    const admins = await db.execute({ sql: "SELECT COUNT(*) AS total FROM app_users WHERE role = 'admin' AND active = 1", args: [] });
+    const total = Number((admins.rows[0] as any)?.total || 0);
+    if (total <= 1) throw new Error('Crea otro administrador antes de eliminar al administrador semilla.');
+  }
+
   if (row.role === 'admin') {
     const admins = await db.execute({ sql: "SELECT COUNT(*) AS total FROM app_users WHERE role = 'admin' AND active = 1", args: [] });
     const total = Number((admins.rows[0] as any)?.total || 0);
