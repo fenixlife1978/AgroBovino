@@ -55,6 +55,10 @@ class StorageService {
   private cloudVersion: number | null = null;
   private cloudReadMissing = false;
   private cloudReadFailed = false;
+  private cloudBaseState: Record<string, unknown> | null = null;
+  private pendingCloudSync = false;
+  private syncInFlight = false;
+  private onlineHandlerAttached = false;
 
   // AgroBovino es una finca única: el identificador cloud es estable y no depende
   // de lo que exista en el navegador. Esto evita que un localStorage antiguo
@@ -100,6 +104,7 @@ class StorageService {
     this.cloudReadMissing = false;
     this.cloudReadFailed = false;
     try {
+      this.attachOnlineRetry();
       const hydrated = await this.hydrateFromCloud();
       if (hydrated) return 'hydrated';
 
@@ -112,9 +117,20 @@ class StorageService {
         return initialized ? 'initialized' : 'failed';
       }
 
+      if (this.cloudReadFailed && this.hasLocalCache()) {
+        // Offline-first: si ya existe una copia sincronizada en este dispositivo,
+        // se permite continuar y se reintenta automáticamente al volver Internet.
+        this.pendingCloudSync = true;
+        return 'offline';
+      }
+
       return 'failed';
     } catch (error) {
       console.warn('AgroBovino: no se pudo inicializar la persistencia cloud.', error);
+      if (this.hasLocalCache()) {
+        this.pendingCloudSync = true;
+        return 'offline';
+      }
       return 'failed';
     }
   }
@@ -138,6 +154,8 @@ class StorageService {
         return false;
       }
       this.cloudVersion = Number.isInteger(payload.version) ? payload.version : null;
+      this.cloudBaseState = payload.state as Record<string, unknown>;
+      this.pendingCloudSync = false;
       return this.importFullBackup(JSON.stringify(payload.state), false);
     } catch (error) {
       this.cloudReadFailed = true;
