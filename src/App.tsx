@@ -229,11 +229,20 @@ export default function App() {
 
   // CRUD Handlers
   const handleSaveAnimal = (animal: Animal) => {
-    if (editingAnimal) {
-      storage.updateAnimal(animal);
-    } else {
-      storage.addAnimal(animal);
+    const duplicateTag = animals.some(a => a.tagNumber.toUpperCase() === animal.tagNumber.toUpperCase() && a.id !== animal.id);
+    if (duplicateTag) {
+      window.alert('El Arete Oficial ' + animal.tagNumber + ' ya está registrado en otro bovino.');
+      return;
     }
+    if (animal.electronicId) {
+      const duplicateRfid = animals.some(a => a.electronicId && a.electronicId.toUpperCase() === animal.electronicId!.toUpperCase() && a.id !== animal.id);
+      if (duplicateRfid) {
+        window.alert('El identificador RFID ' + animal.electronicId + ' ya está asignado a otro bovino.');
+        return;
+      }
+    }
+    if (editingAnimal) storage.updateAnimal(animal);
+    else storage.addAnimal(animal);
     reloadData();
     setEditingAnimal(null);
   };
