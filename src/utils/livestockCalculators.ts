@@ -94,8 +94,8 @@ export function getGestationDays(serviceDateStr: string): number {
   if (!serviceDateStr) return 0;
   const service = new Date(serviceDateStr);
   const now = new Date();
-  const diffTime = Math.abs(now.getTime() - service.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffTime = now.getTime() - service.getTime();
+  const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
   return Math.min(290, diffDays);
 }
 
@@ -106,8 +106,8 @@ export function getDaysInMilk(lastCalvingDateStr?: string): number {
   if (!lastCalvingDateStr) return 0;
   const calving = new Date(lastCalvingDateStr);
   const now = new Date();
-  const diffTime = Math.abs(now.getTime() - calving.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffTime = now.getTime() - calving.getTime();
+  return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 }
 
 /**

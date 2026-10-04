@@ -1,4 +1,5 @@
 import React from 'react';
+import type { UserRole } from '../../auth';
 import {
   LayoutDashboard,
   Tag,
@@ -34,6 +35,7 @@ interface SidebarProps {
   onSelectView: (view: NavView) => void;
   isOpen: boolean;
   onClose: () => void;
+  role: UserRole;
   metricsBadge: {
     animalsCount: number;
     urgentWithdrawals: number;
@@ -48,7 +50,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectView,
   isOpen,
   onClose,
-  metricsBadge
+  metricsBadge,
+  role
 }) => {
   const navItems: {
     id: NavView;
@@ -189,7 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Módulos Operativos
           </div>
 
-          {navItems.map((item) => {
+          {navItems.filter(item => role === 'admin' || !['inventory', 'finance'].includes(item.id)).map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
 
