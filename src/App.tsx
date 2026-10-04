@@ -17,6 +17,8 @@ import {
 } from './types/livestock';
 import { storage } from './services/storageService';
 import { isAnimalInWithdrawal } from './utils/livestockCalculators';
+import { getCurrentUser, logout, type AuthUser } from './auth';
+import { LoginPage } from './components/auth/LoginPage';
 
 // Layout
 import { Navbar } from './components/layout/Navbar';
@@ -52,9 +54,19 @@ import { TransactionModal } from './components/finance/TransactionModal';
 import { TaskModal } from './components/tasks/TaskModal';
 import { FarmSettingsModal } from './components/farm-settings/FarmSettingsModal';
 import { Modal } from './components/common/Modal';
-import { Milk, Scale, HeartPulse, ShieldAlert, Plus, Layers, DollarSign, Package } from 'lucide-react';
+import { Milk, Scale, HeartPulse, ShieldAlert, Plus, Layers, DollarSign, Package, LogOut } from 'lucide-react';
 
 export default function App() {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    void getCurrentUser().then((currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+  }, []);
+
   // Navigation State
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -141,12 +153,19 @@ export default function App() {
 
   // Hydrate the local-first cache from Turso when a cloud snapshot exists.
   useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     void storage.hydrateFromCloud().then((hydrated) => {
       if (hydrated && !cancelled) reloadData();
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.role === 'vaquero' && (currentView === 'inventory' || currentView === 'finance')) {
+      setCurrentView('dashboard');
+    }
+  }, [user, currentView]);
 
   // Sidebar badges computation
   const metricsBadge = useMemo(() => {
@@ -368,10 +387,22 @@ export default function App() {
     setBatchSelectedAnimals([]);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setUser(null);
+    setIsSidebarOpen(false);
+  };
+
   const handleSaveFarm = (updatedFarm: FarmProfile) => {
     storage.saveFarm(updatedFarm);
     setFarm(updatedFarm);
   };
+
+  if (authLoading) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white text-sm">Cargando acceso…</div>;
+  }
+
+  if (!user) return <LoginPage onAuthenticated={setUser} />;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col selection:bg-emerald-500 selection:text-white antialiased">
@@ -395,6 +426,12 @@ export default function App() {
         pendingAlertsCount={metricsBadge.urgentWithdrawals + metricsBadge.imminentCalvings}
       />
 
+      <div className="fixed top-20 right-4 z-30 flex items-center gap-2 bg-white/95 backdrop-blur border border-slate-200 shadow-sm rounded-full px-3 py-1.5">
+        <span className={`w-2 h-2 rounded-full ${user.role === 'admin' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+        <span className="text-xs font-bold text-slate-700">{user.role === 'admin' ? 'Administrador' : 'Vaquero'}</span>
+        <button onClick={handleLogout} className="ml-1 p-1 text-slate-400 hover:text-rose-600" title="Cerrar sesión"><LogOut className="w-3.5 h-3.5" /></button>
+      </div>
+
       <div className="flex flex-1">
         {/* Left Navigation Sidebar */}
         <Sidebar
@@ -403,6 +440,7 @@ export default function App() {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           metricsBadge={metricsBadge}
+          role={user.role}
         />
 
         {/* Main Content Area */}
@@ -703,7 +741,7 @@ export default function App() {
               <span className="text-[10px] text-slate-500 font-medium">Sanidad y Retiro</span>
             </button>
 
-            <button
+            {user.role === 'admin' && <button
               onClick={() => {
                 setIsQuickAddMenuOpen(false);
                 setIsTransactionModalOpen(true);
@@ -715,7 +753,7 @@ export default function App() {
               </div>
               <span className="text-xs font-bold text-slate-900">Ingreso / Gasto</span>
               <span className="text-[10px] text-slate-500 font-medium">Flujo de Caja</span>
-            </button>
+            </button>}
           </div>
         </Modal>
       )}
