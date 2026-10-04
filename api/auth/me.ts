@@ -6,6 +6,6 @@ export default async function handler(req: any, res: any) {
   if (!session) return res.status(401).json({ authenticated: false });
   return res.status(200).json({
     authenticated: true,
-    user: { username: session.role === 'admin' ? 'admin' : 'vaquero', role: session.role },
+    user: { username: session.username, role: session.role },
   });
 }
