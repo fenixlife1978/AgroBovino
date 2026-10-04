@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createClient } from '@libsql/client';
 
 export type UserRole = 'admin' | 'vaquero';
 
@@ -76,4 +77,33 @@ export function requireSession(req: any, res: any): SessionPayload | null {
     return null;
   }
   return session;
+}
+
+
+export async function ensureSeedAdmin(): Promise<void> {
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+  const password = process.env.ADMIN_PASSWORD;
+  if (!url || !authToken || !password) throw new Error('Variables de entorno de autenticación/Turso incompletas.');
+
+  const db = createClient({ url, authToken });
+  await db.execute(`CREATE TABLE IF NOT EXISTS app_users (
+    username TEXT PRIMARY KEY,
+    role TEXT NOT NULL,
+    password TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL
+  )`);
+
+  const existing = await db.execute({
+    sql: 'SELECT username FROM app_users WHERE username = ? LIMIT 1',
+    args: ['admin'],
+  });
+
+  if (!existing.rows.length) {
+    await db.execute({
+      sql: 'INSERT INTO app_users (username, role, password, active, created_at) VALUES (?, ?, ?, 1, ?)',
+      args: ['admin', 'admin', password, new Date().toISOString()],
+    });
+  }
 }
