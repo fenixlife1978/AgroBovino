@@ -1,7 +1,14 @@
-import { createSession, setSessionCookie, type UserRole } from '../_lib/auth';
+import { createSession, setSessionCookie, ensureSeedAdmin, type UserRole } from '../_lib/auth';
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  try {
+    await ensureSeedAdmin();
+  } catch (error) {
+    console.error('AgroBovino seed admin error:', error);
+    return res.status(500).json({ error: 'No se pudo inicializar el administrador semilla.' });
+  }
 
   const username = String(req.body?.username || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
