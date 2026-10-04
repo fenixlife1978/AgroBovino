@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual, randomBytes, scryptSync } from 'node:crypto';
 import { createClient } from '@libsql/client';
 
 export type UserRole = 'admin' | 'vaquero';
@@ -80,6 +80,19 @@ export function requireSession(req: any, res: any): SessionPayload | null {
 }
 
 
+function hashPassword(password: string, salt = randomBytes(16).toString('hex')): string {
+  return `${salt}:${scryptSync(password, salt, 64).toString('hex')}`;
+}
+
+export function verifyPassword(password: string, stored: string): boolean {
+  const [salt, digest] = stored.split(':');
+  if (!salt || !digest) return false;
+  const expected = scryptSync(password, salt, 64).toString('hex');
+  const a = Buffer.from(expected, 'hex');
+  const b = Buffer.from(digest, 'hex');
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export async function ensureSeedAdmin(): Promise<void> {
   const url = process.env.TURSO_DATABASE_URL;
   const authToken = process.env.TURSO_AUTH_TOKEN;
@@ -103,7 +116,7 @@ export async function ensureSeedAdmin(): Promise<void> {
   if (!existing.rows.length) {
     await db.execute({
       sql: 'INSERT INTO app_users (username, role, password, active, created_at) VALUES (?, ?, ?, 1, ?)',
-      args: ['admin', 'admin', password, new Date().toISOString()],
+      args: ['admin', 'admin', hashPassword(password), new Date().toISOString()],
     });
   }
 }
