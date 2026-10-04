@@ -207,6 +207,8 @@ export interface FinancialTransaction {
   quantity?: number;
   unitPrice?: number;
   relatedAnimalTag?: string;
+  /** Registro operativo que originó automáticamente esta transacción. */
+  relatedRecordId?: string;
   paymentStatus: 'cobrado' | 'pagado' | 'pendiente';
   invoiceNumber?: string;
 }
