@@ -5,7 +5,6 @@ import {
   Plus, 
   Radio, 
   Settings, 
-  Database,
   MapPin,
   Calendar
 } from 'lucide-react';
@@ -128,15 +127,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Calendar className="w-3.5 h-3.5 text-slate-500" />
           <span className="capitalize font-medium">{currentDate}</span>
         </div>
-
-        {/* Backup / Data Management */}
-        <button
-          onClick={onOpenBackup}
-          className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
-          title="Copia de Seguridad / Datos"
-        >
-          <Database className="w-4 h-4" />
-        </button>
 
         {/* Settings */}
         <button
