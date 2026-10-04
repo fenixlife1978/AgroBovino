@@ -1,6 +1,8 @@
 import { createClient } from '@libsql/client';
+import { requireSession } from '../_lib/auth';
 
-export default async function handler(_req: any, res: any) {
+export default async function handler(req: any, res: any) {
+  if (!requireSession(req, res)) return;
   try {
     const url = process.env.TURSO_DATABASE_URL;
     const authToken = process.env.TURSO_AUTH_TOKEN;
