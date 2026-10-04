@@ -252,11 +252,23 @@ class StorageService {
         this.cloudReadMissing = true;
         return false;
       }
-      this.cloudVersion = Number.isInteger(payload.version) ? payload.version : null;
-      this.cloudBaseState = payload.state as Record<string, unknown>;
-      this.pendingCloudSync = false;
+      const canonicalState = payload.state as Record<string, unknown>;
+      const canonicalVersion = Number.isInteger(payload.version) ? payload.version : null;
+      const hadPendingChanges = this.pendingCloudSync;
+      const mergedState = hadPendingChanges && this.cloudBaseState
+        ? this.mergePendingWithCanonical(canonicalState)
+        : canonicalState;
+
+      this.cloudVersion = canonicalVersion;
+      this.cloudBaseState = canonicalState;
+      this.pendingCloudSync = hadPendingChanges;
       this.persistSyncMetadata();
-      return this.importFullBackup(JSON.stringify(payload.state), false);
+
+      const imported = this.importFullBackup(JSON.stringify(mergedState), false);
+      if (imported && hadPendingChanges && typeof window !== 'undefined' && navigator.onLine !== false) {
+        queueMicrotask(() => { void this.syncToCloud(); });
+      }
+      return imported;
     } catch (error) {
       this.cloudReadFailed = true;
       console.warn('AgroBovino: no se pudo hidratar desde Turso.', error);
