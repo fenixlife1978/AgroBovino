@@ -179,16 +179,6 @@ export default function App() {
     }
   }, [searchQuery]);
 
-  // Hydrate the local-first cache from Turso when a cloud snapshot exists.
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    void storage.hydrateFromCloud().then((hydrated) => {
-      if (hydrated && !cancelled) reloadData();
-    });
-    return () => { cancelled = true; };
-  }, [user]);
-
   useEffect(() => {
     if (user?.role === 'vaquero' && (currentView === 'inventory' || currentView === 'finance')) {
       setCurrentView('dashboard');
