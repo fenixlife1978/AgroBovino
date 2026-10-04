@@ -52,7 +52,7 @@ export default async function handler(req: any, res: any) {
     if (req.method === 'GET') {
       const result = await db.execute({ sql: 'SELECT payload, updated_at, version FROM app_state WHERE state_key = ?', args: [key] });
       if (!result.rows.length) return res.status(404).json({ found: false });
-      const row = result.rows[0] as { payload: string; updated_at: string; version: number };
+      const row = result.rows[0] as unknown as { payload: string; updated_at: string; version: number };
       return res.status(200).json({ found: true, state: JSON.parse(row.payload), updatedAt: row.updated_at, version: Number(row.version) });
     }
 
@@ -75,7 +75,7 @@ export default async function handler(req: any, res: any) {
       if (!result.rowsAffected) return res.status(409).json({ error: 'State version conflict', code: 'VERSION_CONFLICT' });
     }
     const current = await db.execute({ sql: 'SELECT version FROM app_state WHERE state_key = ?', args: [key] });
-    const version = Number((current.rows[0] as { version: number }).version);
+    const version = Number((current.rows[0] as unknown as { version: number }).version);
     return res.status(200).json({ saved: true, updatedAt, version });
   } catch (error) {
     console.error('Turso state API error:', error);
