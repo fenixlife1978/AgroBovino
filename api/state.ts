@@ -28,6 +28,10 @@ export default async function handler(req: any, res: any) {
   try {
     const db = client();
     await db.execute(TABLE_SQL);
+    const columns = await db.execute('PRAGMA table_info(app_state)');
+    if (!columns.rows.some((row: any) => row.name === 'version')) {
+      await db.execute('ALTER TABLE app_state ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
+    }
     const key = normalizeKey(req.method === 'GET' ? req.query.farmId : req.body?.farmId);
 
     if (req.method === 'GET') {
