@@ -1,20 +1,6 @@
 import React from 'react';
 import type { UserRole } from '../../auth';
-import {
-  LayoutDashboard,
-  Tag,
-  Milk,
-  HeartPulse,
-  Scale,
-  ShieldAlert,
-  Layers,
-  Package,
-  DollarSign,
-  CheckSquare,
-  FileSpreadsheet,
-  Calculator,
-  X
-} from 'lucide-react';
+import { LayoutDashboard, X } from 'lucide-react';
 
 export type NavView = 
   | 'dashboard'
@@ -69,64 +55,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'animals',
-      label: 'Inventario Bovino',
-      icon: Tag,
+      label: 'Ganado',
+      icon: () => <span aria-hidden="true">🐄</span>,
       badge: metricsBadge.animalsCount,
       badgeVariant: 'default',
       description: 'Hojas de vida, genealogía y aretes'
     },
     {
       id: 'dairy',
-      label: 'Producción de Leche',
-      icon: Milk,
+      label: 'Producción de leche',
+      icon: () => <span aria-hidden="true">🥛</span>,
       description: 'Ordeños, tanque, calidad y curvas'
     },
     {
       id: 'reproduction',
-      label: 'Reproducción & Genética',
-      icon: HeartPulse,
+      label: 'Reproducción',
+      icon: () => <span aria-hidden="true">🧬</span>,
       badge: metricsBadge.imminentCalvings > 0 ? metricsBadge.imminentCalvings : undefined,
       badgeVariant: 'warning',
       description: 'Celos, IA, preñeces y partos'
     },
     {
       id: 'beef',
-      label: 'Ceba, Engorde & Pesajes',
-      icon: Scale,
+      label: 'Pesajes',
+      icon: () => <span aria-hidden="true">⚖️</span>,
       description: 'Ganancia diaria (GDP) y faena'
     },
     {
       id: 'health',
-      label: 'Sanidad & Bioseguridad',
-      icon: ShieldAlert,
+      label: 'Salud',
+      icon: () => <span aria-hidden="true">🩺</span>,
       badge: metricsBadge.urgentWithdrawals > 0 ? metricsBadge.urgentWithdrawals : undefined,
       badgeVariant: 'danger',
       description: 'Vacunas, retiros y tratamientos'
     },
     {
       id: 'pastures',
-      label: 'Potreros & Pasturas',
-      icon: Layers,
+      label: 'Potreros',
+      icon: () => <span aria-hidden="true">🌾</span>,
       description: 'Rotación Voisin, aforo y carga'
     },
     {
       id: 'inventory',
-      label: 'Nutrición & Bodega',
-      icon: Package,
+      label: 'Inventario',
+      icon: () => <span aria-hidden="true">💉</span>,
       badge: metricsBadge.lowStockCount > 0 ? metricsBadge.lowStockCount : undefined,
       badgeVariant: 'warning',
       description: 'Insumos, silos, concentrados'
     },
     {
       id: 'finance',
-      label: 'Finanzas & Costos',
-      icon: DollarSign,
+      label: 'Transacciones',
+      icon: () => <span aria-hidden="true">💰</span>,
       description: 'P&L, costo/litro y margen/ha'
     },
     {
       id: 'tasks',
-      label: 'Tareas & Mayordomía',
-      icon: CheckSquare,
+      label: 'Tareas',
+      icon: () => <span aria-hidden="true">📋</span>,
       badge: metricsBadge.urgentTasks > 0 ? metricsBadge.urgentTasks : undefined,
       badgeVariant: 'danger',
       description: 'Actividades de campo y personal'
