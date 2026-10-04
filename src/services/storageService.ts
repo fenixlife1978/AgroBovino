@@ -50,6 +50,50 @@ const STORAGE_KEYS = {
 };
 
 class StorageService {
+  private cloudSyncTimer: ReturnType<typeof setTimeout> | null = null;
+  private cloudHydrating = false;
+
+  private getCloudKey(): string {
+    return this.getFarm().id || 'default';
+  }
+
+  private scheduleCloudSync(): void {
+    if (this.cloudHydrating || typeof window === 'undefined') return;
+    if (this.cloudSyncTimer) clearTimeout(this.cloudSyncTimer);
+    this.cloudSyncTimer = setTimeout(() => { void this.syncToCloud(); }, 750);
+  }
+
+  private async syncToCloud(): Promise<void> {
+    try {
+      const state = JSON.parse(this.exportFullBackup());
+      const response = await fetch('/api/state', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ farmId: this.getCloudKey(), state }),
+      });
+      if (!response.ok) console.warn('AgroBovino: no se pudo sincronizar con Turso.', response.status);
+    } catch (error) {
+      console.warn('AgroBovino: sincronización cloud no disponible; se mantiene modo local.', error);
+    }
+  }
+
+  async hydrateFromCloud(): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    this.cloudHydrating = true;
+    try {
+      const response = await fetch(`/api/state?farmId=${encodeURIComponent(this.getCloudKey())}`, { cache: 'no-store' });
+      if (response.status === 404 || !response.ok) return false;
+      const payload = await response.json();
+      if (!payload?.found || !payload.state) return false;
+      return this.importFullBackup(JSON.stringify(payload.state), false);
+    } catch (error) {
+      console.warn('AgroBovino: no se pudo hidratar desde Turso; se mantiene modo local.', error);
+      return false;
+    } finally {
+      this.cloudHydrating = false;
+    }
+  }
+
   private getItem<T>(key: string, defaultValue: T): T {
     try {
       const data = localStorage.getItem(key);
@@ -63,6 +107,7 @@ class StorageService {
   private setItem<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+      this.scheduleCloudSync();
     } catch (e) {
       console.error(`Error saving to localStorage [${key}]:`, e);
     }
@@ -527,7 +572,7 @@ class StorageService {
     return JSON.stringify(backup, null, 2);
   }
 
-  importFullBackup(jsonString: string): boolean {
+  importFullBackup(jsonString: string, syncToCloud = true): boolean {
     try {
       const data = JSON.parse(jsonString);
       if (data.farm) this.saveFarm(data.farm);
@@ -544,6 +589,7 @@ class StorageService {
       if (data.paddockNovelties) this.savePaddockNovelties(data.paddockNovelties);
       if (data.herdRotations) this.saveHerdRotations(data.herdRotations);
       if (data.rodeoAudits) this.saveDailyRodeoAudits(data.rodeoAudits);
+      if (syncToCloud) this.scheduleCloudSync();
       return true;
     } catch (e) {
       console.error('Error importing backup:', e);
