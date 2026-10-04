@@ -74,7 +74,8 @@ class StorageService {
       });
       if (!response.ok) {
         if (response.status === 409) {
-          console.warn('AgroBovino: conflicto de versión en Turso; se conserva el estado local hasta resolver la concurrencia.');
+          console.warn('AgroBovino: conflicto de versión en Turso; se descarta el snapshot local en conflicto y se recarga la versión canónica de Turso.');
+          await this.hydrateFromCloud();
         } else {
           console.warn('AgroBovino: no se pudo sincronizar con Turso.', response.status);
         }
@@ -84,6 +85,19 @@ class StorageService {
       if (Number.isInteger(saved?.version)) this.cloudVersion = saved.version;
     } catch (error) {
       console.warn('AgroBovino: sincronización cloud no disponible; se mantiene modo local.', error);
+    }
+  }
+
+  async initializeCloud(): Promise<'hydrated' | 'initialized' | 'failed'> {
+    if (typeof window === 'undefined') return 'failed';
+    try {
+      const hydrated = await this.hydrateFromCloud();
+      if (hydrated) return 'hydrated';
+      await this.syncToCloud();
+      return 'initialized';
+    } catch (error) {
+      console.warn('AgroBovino: no se pudo inicializar la persistencia cloud.', error);
+      return 'failed';
     }
   }
 
