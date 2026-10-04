@@ -361,17 +361,22 @@ export const FarmSettingsModal: React.FC<FarmSettingsModalProps> = ({
               </div>
             </div>
 
-            {/* Reset to Demo */}
-            <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-xs">
-              <span className="text-slate-500 text-[11px]">¿Necesitas volver al estado inicial de prueba?</span>
-              <button
-                type="button"
-                onClick={handleResetDemo}
-                className="text-rose-600 hover:text-rose-700 hover:underline font-bold text-xs flex items-center gap-1 cursor-pointer"
-              >
-                <RefreshCw className="w-3 h-3" />
-                Reiniciar a Datos Demo
-              </button>
+            {/* Factory reset */}
+            <div className="pt-3 border-t border-slate-200 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <span className="text-slate-700 text-[11px] font-bold block">Reinicio de fábrica</span>
+                  <span className="text-slate-500 text-[10px]">Elimina la finca y usuarios de Turso y restaura únicamente el administrador semilla.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFactoryReset}
+                  className="text-rose-600 hover:text-rose-700 hover:underline font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Reiniciar de fábrica
+                </button>
+              </div>
             </div>
           </div>
         )}
