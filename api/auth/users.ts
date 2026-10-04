@@ -1,4 +1,4 @@
-import { createUser, deleteUser, listUsers, requireAdmin, setUserActive, updateUserPassword, type UserRole } from '../_lib/auth';
+import { createUser, deleteUser, listUsers, requireAdmin, setUserActive, updateUserPassword, type UserRole } from '../_lib/auth.js';
 
 function validRole(value: unknown): value is UserRole {
   return value === 'admin' || value === 'vaquero';
