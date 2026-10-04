@@ -144,7 +144,7 @@ export const ReproductionView: React.FC<ReproductionViewProps> = ({
             }`}
           >
             <ThermometerSnowflake className="w-3.5 h-3.5 text-teal-600" />
-            Termo de Nitrógeno ({semenStraws.length})
+            🧪 Semen / Termo de Nitrógeno ({semenStraws.length})
           </button>
           <button
             onClick={() => setActiveTab('imminent_calvings')}
