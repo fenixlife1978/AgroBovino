@@ -180,3 +180,5 @@ export async function deleteUser(username: string): Promise<void> {
 
   await db.execute({ sql: 'DELETE FROM app_users WHERE username = ?', args: [username] });
 }
+
+// Production authentication requires ADMIN_PASSWORD, SESSION_SECRET, TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.
