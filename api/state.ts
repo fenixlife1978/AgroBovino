@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@libsql/client';
 
 const TABLE_SQL = `CREATE TABLE IF NOT EXISTS app_state (
@@ -19,7 +18,7 @@ function normalizeKey(value: unknown): string {
   return key.slice(0, 120) || 'default';
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET' && req.method !== 'PUT') {
     return res.status(405).json({ error: 'Method not allowed' });
