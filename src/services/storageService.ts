@@ -53,9 +53,14 @@ class StorageService {
   private cloudSyncTimer: ReturnType<typeof setTimeout> | null = null;
   private cloudHydrating = false;
   private cloudVersion: number | null = null;
+  private cloudReadMissing = false;
+  private cloudReadFailed = false;
 
+  // AgroBovino es una finca única: el identificador cloud es estable y no depende
+  // de lo que exista en el navegador. Esto evita que un localStorage antiguo
+  // pueda apuntar accidentalmente a otra "finca" y convertirse en una fuente paralela.
   private getCloudKey(): string {
-    return this.getFarm().id || 'default';
+    return 'farm-01';
   }
 
   private scheduleCloudSync(): void {
@@ -92,11 +97,22 @@ class StorageService {
 
   async initializeCloud(): Promise<'hydrated' | 'initialized' | 'failed'> {
     if (typeof window === 'undefined') return 'failed';
+    this.cloudReadMissing = false;
+    this.cloudReadFailed = false;
     try {
       const hydrated = await this.hydrateFromCloud();
       if (hydrated) return 'hydrated';
-      const initialized = await this.syncToCloud();
-      return initialized ? 'initialized' : 'failed';
+
+      // Si Turso no tiene estado, NO se reutiliza el localStorage existente:
+      // Turso es la fuente de verdad. Se crea el estado canónico únicamente
+      // con los datos iniciales de la aplicación.
+      if (this.cloudReadMissing) {
+        this.resetLocalToInitialData();
+        const initialized = await this.syncToCloud();
+        return initialized ? 'initialized' : 'failed';
+      }
+
+      return 'failed';
     } catch (error) {
       console.warn('AgroBovino: no se pudo inicializar la persistencia cloud.', error);
       return 'failed';
@@ -108,13 +124,24 @@ class StorageService {
     this.cloudHydrating = true;
     try {
       const response = await fetch(`/api/state?farmId=${encodeURIComponent(this.getCloudKey())}`, { cache: 'no-store' });
-      if (response.status === 404 || !response.ok) return false;
+      if (response.status === 404) {
+        this.cloudReadMissing = true;
+        return false;
+      }
+      if (!response.ok) {
+        this.cloudReadFailed = true;
+        return false;
+      }
       const payload = await response.json();
-      if (!payload?.found || !payload.state) return false;
+      if (!payload?.found || !payload.state) {
+        this.cloudReadMissing = true;
+        return false;
+      }
       this.cloudVersion = Number.isInteger(payload.version) ? payload.version : null;
       return this.importFullBackup(JSON.stringify(payload.state), false);
     } catch (error) {
-      console.warn('AgroBovino: no se pudo hidratar desde Turso; se mantiene modo local.', error);
+      this.cloudReadFailed = true;
+      console.warn('AgroBovino: no se pudo hidratar desde Turso.', error);
       return false;
     } finally {
       this.cloudHydrating = false;
@@ -622,6 +649,24 @@ class StorageService {
       console.error('Error importing backup:', e);
       return false;
     }
+  }
+
+  private resetLocalToInitialData(): void {
+    localStorage.clear();
+    this.saveFarm(INITIAL_FARM);
+    this.saveAnimals(INITIAL_ANIMALS);
+    this.savePastures(INITIAL_PASTURES);
+    this.saveMilkRecords(INITIAL_MILK_RECORDS);
+    this.saveWeightRecords(INITIAL_WEIGHT_RECORDS);
+    this.saveReproductionEvents(INITIAL_REPRODUCTION_EVENTS);
+    this.saveHealthRecords(INITIAL_HEALTH_RECORDS);
+    this.saveInventory(INITIAL_INVENTORY);
+    this.saveSemenStraws(INITIAL_SEMEN_STRAWS);
+    this.saveTransactions(INITIAL_TRANSACTIONS);
+    this.saveTasks(INITIAL_TASKS);
+    this.savePaddockNovelties(INITIAL_PADDOCK_NOVELTIES);
+    this.saveHerdRotations(INITIAL_HERD_ROTATIONS);
+    this.saveDailyRodeoAudits(INITIAL_RODEO_AUDITS);
   }
 
   resetToDemoData(): void {
