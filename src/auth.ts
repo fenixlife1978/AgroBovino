@@ -16,11 +16,11 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   }
 }
 
-export async function login(username: string, password: string): Promise<AuthUser> {
+export async function login(username: string, password: string, role: UserRole): Promise<AuthUser> {
   const response = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, role }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data?.error || 'No se pudo iniciar sesión.');
