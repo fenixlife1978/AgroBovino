@@ -154,7 +154,16 @@ export async function updateUserPassword(username: string, password: string): Pr
 }
 
 export async function deleteUser(username: string): Promise<void> {
-  if (username === 'admin') throw new Error('El administrador semilla no se puede eliminar.');
   const db = getDb();
+  const target = await db.execute({ sql: 'SELECT username, role FROM app_users WHERE username = ? LIMIT 1', args: [username] });
+  const row = target.rows[0] as { username?: string; role?: string } | undefined;
+  if (!row?.username) throw new Error('El usuario no existe.');
+
+  if (row.role === 'admin') {
+    const admins = await db.execute({ sql: "SELECT COUNT(*) AS total FROM app_users WHERE role = 'admin' AND active = 1", args: [] });
+    const total = Number((admins.rows[0] as any)?.total || 0);
+    if (total <= 1) throw new Error('No se puede eliminar al último administrador.');
+  }
+
   await db.execute({ sql: 'DELETE FROM app_users WHERE username = ?', args: [username] });
 }
