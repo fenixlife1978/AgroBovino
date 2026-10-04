@@ -708,7 +708,7 @@ class StorageService {
     const animals = this.getAnimals();
     let movedCount = 0;
     animals.forEach(a => {
-      const matchLot = rotation.lotName && a.lotName === rotation.lotName;
+      const matchLot = Boolean(rotation.lotName) && a.lotName === rotation.lotName && a.pastureId === rotation.sourcePastureId;
       const matchPasture = !rotation.lotName && a.pastureId === rotation.sourcePastureId;
       if (matchLot || matchPasture) {
         a.pastureId = rotation.targetPastureId;
