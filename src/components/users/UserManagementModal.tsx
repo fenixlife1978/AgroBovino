@@ -92,7 +92,7 @@ export const UserManagementModal: React.FC<{ isOpen: boolean; onClose: () => voi
                 <td className="p-3"><div className="flex justify-end gap-1">
                   <button onClick={() => void toggle(user)} disabled={loading} className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-30" title={user.active ? 'Desactivar' : 'Activar'}>{user.active ? <UserX className="w-4 h-4 text-amber-600" /> : <UserCheck className="w-4 h-4 text-emerald-600" />}</button>
                   <button onClick={() => void resetPassword(user)} disabled={loading} className="p-2 rounded-lg hover:bg-slate-100" title="Cambiar contraseña"><KeyRound className="w-4 h-4 text-slate-600" /></button>
-                  <button onClick={() => void remove(user)} disabled={loading} className="p-2 rounded-lg hover:bg-rose-50 disabled:opacity-30" title="Eliminar"><Trash2 className="w-4 h-4 text-rose-600" /></button>
+                  <button onClick={() => void remove(user)} disabled={loading || (user.username === 'admin' && users.filter(u => u.role === 'admin' && u.active).length <= 1)} className="p-2 rounded-lg hover:bg-rose-50 disabled:opacity-30" title="Eliminar"><Trash2 className="w-4 h-4 text-rose-600" /></button>
                 </div></td>
               </tr>)}
               {!users.length && !loading && <tr><td colSpan={4} className="p-6 text-center text-slate-400">No hay usuarios.</td></tr>}
