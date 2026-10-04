@@ -49,7 +49,7 @@ export default async function handler(req: any, res: any) {
   } catch (error: any) {
     const message = String(error?.message || '');
     if (message.includes('UNIQUE constraint failed')) return res.status(409).json({ error: 'Ese usuario ya existe.' });
-    if (message.includes('no se puede eliminar')) return res.status(400).json({ error: message });
+    if (message.includes('no se puede eliminar') || message.includes('Crea otro administrador')) return res.status(400).json({ error: message });
     console.error('AgroBovino users error:', error);
     return res.status(500).json({ error: 'No se pudo actualizar los usuarios.' });
   }
