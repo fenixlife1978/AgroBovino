@@ -94,6 +94,10 @@ export async function ensureSeedAdmin(): Promise<void> {
   const password = process.env.ADMIN_PASSWORD;
   if (!password) throw new Error('ADMIN_PASSWORD no está configurada.');
   const db = getDb();
+  await db.execute(`CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )`);
   await db.execute(`CREATE TABLE IF NOT EXISTS app_users (
     username TEXT PRIMARY KEY,
     role TEXT NOT NULL,
@@ -101,8 +105,10 @@ export async function ensureSeedAdmin(): Promise<void> {
     active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL
   )`);
+  const deletedMarker = await db.execute({ sql: 'SELECT value FROM app_settings WHERE key = ? LIMIT 1', args: ['seed_admin_deleted'] });
+  const seedAdminDeleted = String((deletedMarker.rows[0] as any)?.value || '') === '1';
   const existing = await db.execute({ sql: 'SELECT username FROM app_users WHERE username = ? LIMIT 1', args: ['admin'] });
-  if (!existing.rows.length) {
+  if (!existing.rows.length && !seedAdminDeleted) {
     await db.execute({
       sql: 'INSERT INTO app_users (username, role, password, active, created_at) VALUES (?, ?, ?, 1, ?)',
       args: ['admin', 'admin', hashPassword(password), new Date().toISOString()],
@@ -163,6 +169,7 @@ export async function deleteUser(username: string): Promise<void> {
     const admins = await db.execute({ sql: "SELECT COUNT(*) AS total FROM app_users WHERE role = 'admin' AND active = 1", args: [] });
     const total = Number((admins.rows[0] as any)?.total || 0);
     if (total <= 1) throw new Error('Crea otro administrador antes de eliminar al administrador semilla.');
+    await db.execute({ sql: 'INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', args: ['seed_admin_deleted', '1'] });
   }
 
   if (row.role === 'admin') {
