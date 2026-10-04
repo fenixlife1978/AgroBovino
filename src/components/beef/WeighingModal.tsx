@@ -8,6 +8,7 @@ interface WeighingModalProps {
   onClose: () => void;
   onSave: (record: WeightRecord) => void;
   animals: Animal[];
+  weightRecords: WeightRecord[];
   selectedAnimal?: Animal | null;
 }
 
@@ -16,6 +17,7 @@ export const WeighingModal: React.FC<WeighingModalProps> = ({
   onClose,
   onSave,
   animals,
+  weightRecords,
   selectedAnimal
 }) => {
   const [animalId, setAnimalId] = useState(selectedAnimal?.id || animals[0]?.id || '');
@@ -26,8 +28,15 @@ export const WeighingModal: React.FC<WeighingModalProps> = ({
   const [notes, setNotes] = useState('');
 
   const currentAnimal = animals.find(a => a.id === animalId) || selectedAnimal;
-  const previousWeight = currentAnimal?.weightKg || 400;
-  const daysEstimated = 30;
+  const priorRecords = weightRecords
+    .filter(r => r.animalId === currentAnimal?.id && r.date < date)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const latestPriorRecord = priorRecords[0];
+  const previousWeight = latestPriorRecord?.weightKg ?? currentAnimal?.weightKg ?? 0;
+  const previousDate = latestPriorRecord?.date;
+  const daysEstimated = previousDate
+    ? Math.max(1, Math.round((new Date(date).getTime() - new Date(previousDate).getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
   const calculatedADG = calculateADG(Number(weightKg), previousWeight, daysEstimated);
 
   const handleSubmit = (e: React.FormEvent) => {
