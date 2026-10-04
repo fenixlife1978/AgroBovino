@@ -171,6 +171,7 @@ class StorageService {
       if (!response.ok) {
         console.warn('AgroBovino: Turso no está disponible; los cambios quedan en cola local hasta recuperar la conexión.', response.status);
         this.pendingCloudSync = true;
+        this.persistSyncMetadata();
         return false;
       }
 
@@ -183,6 +184,7 @@ class StorageService {
     } catch (error) {
       console.warn('AgroBovino: conexión intermitente; los cambios quedan en cola local.', error);
       this.pendingCloudSync = true;
+      this.persistSyncMetadata();
       return false;
     } finally {
       this.syncInFlight = false;
