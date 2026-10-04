@@ -139,6 +139,15 @@ export default function App() {
     }
   }, [searchQuery]);
 
+  // Hydrate the local-first cache from Turso when a cloud snapshot exists.
+  useEffect(() => {
+    let cancelled = false;
+    void storage.hydrateFromCloud().then((hydrated) => {
+      if (hydrated && !cancelled) reloadData();
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   // Sidebar badges computation
   const metricsBadge = useMemo(() => {
     const urgentWithdrawals = animals.filter(a => isAnimalInWithdrawal(a.withdrawalEndDate)).length;
