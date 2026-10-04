@@ -19,6 +19,7 @@ import { storage } from './services/storageService';
 import { isAnimalInWithdrawal } from './utils/livestockCalculators';
 import { getCurrentUser, logout, type AuthUser } from './auth';
 import { LoginPage } from './components/auth/LoginPage';
+import { UserManagementModal } from './components/users/UserManagementModal';
 
 // Layout
 import { Navbar } from './components/layout/Navbar';
@@ -110,6 +111,7 @@ export default function App() {
   const [isQuickAddMenuOpen, setIsQuickAddMenuOpen] = useState(false);
   const [isRfidScannerOpen, setIsRfidScannerOpen] = useState(false);
   const [isFarmSettingsOpen, setIsFarmSettingsOpen] = useState(false);
+  const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
   const [farmSettingsInitialTab, setFarmSettingsInitialTab] = useState<'settings' | 'backup'>('settings');
 
   // Animal Modals
@@ -428,7 +430,8 @@ export default function App() {
 
       <div className="fixed top-20 right-4 z-30 flex items-center gap-2 bg-white/95 backdrop-blur border border-slate-200 shadow-sm rounded-full px-3 py-1.5">
         <span className={`w-2 h-2 rounded-full ${user.role === 'admin' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-        <span className="text-xs font-bold text-slate-700">{user.role === 'admin' ? 'Administrador' : 'Vaquero'}</span>
+        <span className="text-xs font-bold text-slate-700">{user.username} · {user.role === 'admin' ? 'Administrador' : 'Vaquero'}</span>
+        {user.role === 'admin' && <button onClick={() => setIsUserManagementOpen(true)} className="ml-1 p-1 text-slate-400 hover:text-emerald-600" title="Gestionar usuarios"><span className="text-[10px] font-bold">USUARIOS</span></button>}
         <button onClick={handleLogout} className="ml-1 p-1 text-slate-400 hover:text-rose-600" title="Cerrar sesión"><LogOut className="w-3.5 h-3.5" /></button>
       </div>
 
@@ -947,6 +950,8 @@ export default function App() {
           onSave={handleSaveTask}
         />
       )}
+
+      {user.role === 'admin' && <UserManagementModal isOpen={isUserManagementOpen} onClose={() => setIsUserManagementOpen(false)} />}
 
       {isFarmSettingsOpen && (
         <FarmSettingsModal
