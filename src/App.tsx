@@ -316,10 +316,18 @@ export default function App() {
   };
 
   const handleSaveCalvingEvent = (event: ReproductionEvent, newCalf?: Animal) => {
-    storage.addReproductionEvent(event);
-    if (newCalf) {
-      storage.addAnimal(newCalf);
+    const mother = animals.find(a => a.id === event.animalId);
+    if (!mother) return;
+    if (mother.reproductiveStatus !== 'gestante' && mother.reproductiveStatus !== 'en_secado') {
+      window.alert('El parto solo puede registrarse para una hembra en estado gestante o en secado.');
+      return;
     }
+    if (newCalf && animals.some(a => a.tagNumber.toUpperCase() === newCalf.tagNumber.toUpperCase())) {
+      window.alert('El Arete Oficial ' + newCalf.tagNumber + ' ya existe en el censo.');
+      return;
+    }
+    storage.addReproductionEvent(event);
+    if (newCalf) storage.addAnimal(newCalf);
     reloadData();
   };
 
