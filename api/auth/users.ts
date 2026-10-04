@@ -9,7 +9,7 @@ function validUsername(value: string): boolean {
 }
 
 export default async function handler(req: any, res: any) {
-  if (!requireAdmin(req, res)) return;
+  if (!(await requireAdmin(req, res))) return;
   try {
     if (req.method === 'GET') return res.status(200).json({ users: await listUsers() });
 
