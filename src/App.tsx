@@ -763,6 +763,7 @@ export default function App() {
               pastures={pastures}
               farm={farm}
               healthRecords={healthRecords}
+              reproductionEvents={reproductionEvents}
             />
           )}
 
