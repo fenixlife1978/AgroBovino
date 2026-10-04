@@ -1,0 +1,6 @@
+{
+  "name": "AgroBovino ERP - Sistema de Gestión Ganadera Integral",
+  "description": "Software ERP profesional para la administración técnica, zootécnica, reproductiva, sanitaria y financiera de fincas ganaderas y agropecuarias.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
