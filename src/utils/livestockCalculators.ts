@@ -80,10 +80,11 @@ export function calculateADG(currentWeightKg: number, previousWeightKg: number, 
 /**
  * Calcula la fecha probable de parto bovino (283 días estándar de gestación)
  */
-export function calculateExpectedCalvingDate(serviceDateStr: string): string {
+export function calculateExpectedCalvingDate(serviceDateStr: string, gestationDays: number = 283): string {
   if (!serviceDateStr) return '';
   const serviceDate = new Date(serviceDateStr);
-  serviceDate.setDate(serviceDate.getDate() + 283);
+  const days = Number.isFinite(gestationDays) && gestationDays > 0 ? Math.round(gestationDays) : 283;
+  serviceDate.setDate(serviceDate.getDate() + days);
   return serviceDate.toISOString().split('T')[0];
 }
 
@@ -115,9 +116,10 @@ export function getDaysInMilk(lastCalvingDateStr?: string): number {
  */
 export function isAnimalInWithdrawal(withdrawalEndDate?: string): boolean {
   if (!withdrawalEndDate) return false;
-  const end = new Date(withdrawalEndDate);
-  const now = new Date();
-  return end >= now;
+  // Withdrawal is valid through the stated calendar date, not only until
+  // midnight at the start of that date.
+  const today = new Date().toISOString().split('T')[0];
+  return withdrawalEndDate >= today;
 }
 
 /**
