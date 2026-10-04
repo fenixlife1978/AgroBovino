@@ -1,5 +1,5 @@
 import { createClient } from '@libsql/client';
-import { requireSession } from './_lib/auth';
+import { requireSession } from './_lib/auth.js';
 
 const TABLE_SQL = `CREATE TABLE IF NOT EXISTS app_state (
   state_key TEXT PRIMARY KEY,
