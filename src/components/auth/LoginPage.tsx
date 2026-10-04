@@ -42,21 +42,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
             <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700"><ShieldCheck className="w-5 h-5" /></div>
             <div>
               <h2 className="font-bold text-slate-900">Iniciar sesión</h2>
-              <p className="text-xs text-slate-500">Seleccione su cuenta de trabajo</p>
+              <p className="text-xs text-slate-500">Ingrese la cuenta que le asignó el administrador</p>
             </div>
           </div>
 
-          <label className="block text-sm font-semibold text-slate-700 mb-2">Rol / usuario</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Usuario</label>
           <div className="relative mb-4">
             <UserRound className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-            <select
+            <input
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              placeholder="Ingrese su usuario"
+              autoComplete="username"
               className="w-full h-11 rounded-xl border border-slate-200 pl-10 pr-3 bg-white text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-            >
-              <option value="admin">Administrador</option>
-              <option value="vaquero">Vaquero</option>
-            </select>
+              required
+            />
           </div>
 
           <label className="block text-sm font-semibold text-slate-700 mb-2">Contraseña</label>
