@@ -1,5 +1,5 @@
 import { createClient } from '@libsql/client';
-import { requireSession } from '../_lib/auth';
+import { requireSession } from '../_lib/auth.js';
 
 export default async function handler(req: any, res: any) {
   if (!requireSession(req, res)) return;
