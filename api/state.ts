@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { requireSession } from './_lib/auth';
 
 const TABLE_SQL = `CREATE TABLE IF NOT EXISTS app_state (
   state_key TEXT PRIMARY KEY,
@@ -21,6 +22,7 @@ function normalizeKey(value: unknown): string {
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Cache-Control', 'no-store');
+  if (!requireSession(req, res)) return;
   if (req.method !== 'GET' && req.method !== 'PUT') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
