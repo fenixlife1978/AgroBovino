@@ -11,7 +11,7 @@ function client() {
 export default async function handler(req: any, res: any) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!requireAdmin(req, res)) return;
+  if (!(await requireAdmin(req, res))) return;
   try {
     const db = client();
     await db.execute('DROP TABLE IF EXISTS app_state');
