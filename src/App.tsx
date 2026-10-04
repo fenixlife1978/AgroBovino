@@ -979,6 +979,7 @@ export default function App() {
           }}
           onSave={handleSaveWeightRecord}
           animals={animals}
+          weightRecords={weightRecords}
           selectedAnimal={weighingPreselectedAnimal}
         />
       )}
