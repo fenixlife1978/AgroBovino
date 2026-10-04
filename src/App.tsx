@@ -62,10 +62,36 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    void getCurrentUser().then((currentUser) => {
+    let cancelled = false;
+    void getCurrentUser().then(async (currentUser) => {
+      if (cancelled) return;
       setUser(currentUser);
+      if (!currentUser) {
+        setAuthLoading(false);
+        return;
+      }
+      const result = await storage.initializeCloud();
+      if (cancelled) return;
+      if (result === 'failed') {
+        console.warn('AgroBovino: no se pudo confirmar la fuente de datos Turso; se mantiene la sesión sin marcar la persistencia como sincronizada.');
+      }
+      setFarm(storage.getFarm());
+      setAnimals(storage.getAnimals());
+      setPastures(storage.getPastures());
+      setMilkRecords(storage.getMilkRecords());
+      setWeightRecords(storage.getWeightRecords());
+      setReproductionEvents(storage.getReproductionEvents());
+      setHealthRecords(storage.getHealthRecords());
+      setInventory(storage.getInventory());
+      setSemenStraws(storage.getSemenStraws());
+      setTransactions(storage.getTransactions());
+      setTasks(storage.getTasks());
+      setPaddockNovelties(storage.getPaddockNovelties());
+      setHerdRotations(storage.getHerdRotations());
+      setRodeoAudits(storage.getDailyRodeoAudits());
       setAuthLoading(false);
     });
+    return () => { cancelled = true; };
   }, []);
 
   // Navigation State
