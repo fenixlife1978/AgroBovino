@@ -48,7 +48,7 @@ function validateRoleWrite(role: 'admin' | 'vaquero', current: Record<string, un
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Cache-Control', 'no-store');
-  const session = requireSession(req, res);
+  const session = await requireSession(req, res);
   if (!session) return;
   if (req.method !== 'GET' && req.method !== 'PUT') return res.status(405).json({ error: 'Method not allowed' });
 
