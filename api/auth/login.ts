@@ -5,12 +5,14 @@ export default async function handler(req: any, res: any) {
 
   const username = String(req.body?.username || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
+  const requestedRole = String(req.body?.role || '').trim().toLowerCase();
 
-  if (!username || !password) return res.status(400).json({ error: 'Usuario y contraseña son obligatorios.' });
+  if (!username || !password || (requestedRole !== 'admin' && requestedRole !== 'vaquero')) return res.status(400).json({ error: 'Usuario, rol y contraseña son obligatorios.' });
 
   try {
     const user = await authenticateUser(username, password);
     if (!user) return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
+    if (user.role !== requestedRole) return res.status(403).json({ error: 'El rol seleccionado no corresponde a esta cuenta.' });
     setSessionCookie(res, createSession(user.username, user.role));
     return res.status(200).json({ authenticated: true, user });
   } catch (error) {
