@@ -120,3 +120,17 @@ export async function ensureSeedAdmin(): Promise<void> {
     });
   }
 }
+
+
+export async function authenticateSeedAdmin(password: string): Promise<boolean> {
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+  if (!url || !authToken) return false;
+  const db = createClient({ url, authToken });
+  const result = await db.execute({
+    sql: 'SELECT password FROM app_users WHERE username = ? AND role = ? AND active = 1 LIMIT 1',
+    args: ['admin', 'admin'],
+  });
+  const row = result.rows[0] as { password?: string } | undefined;
+  return Boolean(row?.password && verifyPassword(password, row.password));
+}
