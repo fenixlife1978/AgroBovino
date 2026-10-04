@@ -177,8 +177,18 @@ class StorageService {
 
       const saved = await response.json();
       if (Number.isInteger(saved?.version)) this.cloudVersion = saved.version;
+
+      // A local edit can happen while the PUT is in flight. Never clear the
+      // pending flag in that case, otherwise that edit could remain only in
+      // localStorage and never be retried against Turso.
+      const latestLocal = JSON.parse(this.exportFullBackup()) as Record<string, unknown>;
+      const localChangedDuringSync = Object.keys(state).some(key => {
+        if (key === 'exportedAt') return false;
+        return JSON.stringify(latestLocal[key]) !== JSON.stringify(state[key]);
+      });
+
       this.cloudBaseState = state;
-      this.pendingCloudSync = false;
+      this.pendingCloudSync = localChangedDuringSync;
       this.persistSyncMetadata();
       return true;
     } catch (error) {
