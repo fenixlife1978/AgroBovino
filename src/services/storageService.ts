@@ -52,6 +52,7 @@ const STORAGE_KEYS = {
 class StorageService {
   private cloudSyncTimer: ReturnType<typeof setTimeout> | null = null;
   private cloudHydrating = false;
+  private cloudVersion: number | null = null;
 
   private getCloudKey(): string {
     return this.getFarm().id || 'default';
@@ -69,9 +70,18 @@ class StorageService {
       const response = await fetch('/api/state', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ farmId: this.getCloudKey(), state }),
+        body: JSON.stringify({ farmId: this.getCloudKey(), state, version: this.cloudVersion }),
       });
-      if (!response.ok) console.warn('AgroBovino: no se pudo sincronizar con Turso.', response.status);
+      if (!response.ok) {
+        if (response.status === 409) {
+          console.warn('AgroBovino: conflicto de versión en Turso; se conserva el estado local hasta resolver la concurrencia.');
+        } else {
+          console.warn('AgroBovino: no se pudo sincronizar con Turso.', response.status);
+        }
+        return;
+      }
+      const saved = await response.json();
+      if (Number.isInteger(saved?.version)) this.cloudVersion = saved.version;
     } catch (error) {
       console.warn('AgroBovino: sincronización cloud no disponible; se mantiene modo local.', error);
     }
@@ -85,6 +95,7 @@ class StorageService {
       if (response.status === 404 || !response.ok) return false;
       const payload = await response.json();
       if (!payload?.found || !payload.state) return false;
+      this.cloudVersion = Number.isInteger(payload.version) ? payload.version : null;
       return this.importFullBackup(JSON.stringify(payload.state), false);
     } catch (error) {
       console.warn('AgroBovino: no se pudo hidratar desde Turso; se mantiene modo local.', error);
