@@ -1,39 +1,20 @@
-import { createSession, setSessionCookie, ensureSeedAdmin, authenticateSeedAdmin, type UserRole } from '../_lib/auth';
+import { createSession, setSessionCookie, authenticateUser } from '../_lib/auth';
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  try {
-    await ensureSeedAdmin();
-  } catch (error) {
-    console.error('AgroBovino seed admin error:', error);
-    return res.status(500).json({ error: 'No se pudo inicializar el administrador semilla.' });
-  }
-
   const username = String(req.body?.username || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
 
-  const credentials: Record<string, { role: UserRole; password?: string }> = {
-    admin: { role: 'admin', password: process.env.ADMIN_PASSWORD },
-    vaquero: { role: 'vaquero', password: process.env.VAQUERO_PASSWORD },
-  };
-
-  const account = credentials[username];
-  const valid = username === 'admin'
-    ? await authenticateSeedAdmin(password)
-    : Boolean(account?.password && password === account.password);
-  if (!account || !valid) {
-    return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
-  }
+  if (!username || !password) return res.status(400).json({ error: 'Usuario y contraseña son obligatorios.' });
 
   try {
-    setSessionCookie(res, createSession(account.role));
-    return res.status(200).json({
-      authenticated: true,
-      user: { username, role: account.role },
-    });
+    const user = await authenticateUser(username, password);
+    if (!user) return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
+    setSessionCookie(res, createSession(user.username, user.role));
+    return res.status(200).json({ authenticated: true, user });
   } catch (error) {
     console.error('AgroBovino login error:', error);
-    return res.status(500).json({ error: 'La autenticación no está configurada correctamente en el servidor.' });
+    return res.status(500).json({ error: 'No se pudo completar la autenticación.' });
   }
 }
