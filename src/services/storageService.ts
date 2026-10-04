@@ -59,6 +59,8 @@ class StorageService {
   private pendingCloudSync = false;
   private syncInFlight = false;
   private onlineHandlerAttached = false;
+  private readonly pendingSyncStorageKey = 'agro_pending_cloud_sync';
+  private readonly cloudBaseStorageKey = 'agro_cloud_base_state';
 
   // AgroBovino es una finca única: el identificador cloud es estable y no depende
   // de lo que exista en el navegador. Esto evita que un localStorage antiguo
@@ -67,9 +69,34 @@ class StorageService {
     return 'farm-01';
   }
 
+  private persistSyncMetadata(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(this.pendingSyncStorageKey, this.pendingCloudSync ? '1' : '0');
+      if (this.cloudBaseState) localStorage.setItem(this.cloudBaseStorageKey, JSON.stringify(this.cloudBaseState));
+      else localStorage.removeItem(this.cloudBaseStorageKey);
+    } catch (error) {
+      console.warn('AgroBovino: no se pudo guardar el estado de sincronización local.', error);
+    }
+  }
+
+  private restoreSyncMetadata(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      this.pendingCloudSync = localStorage.getItem(this.pendingSyncStorageKey) === '1';
+      const rawBase = localStorage.getItem(this.cloudBaseStorageKey);
+      this.cloudBaseState = rawBase ? JSON.parse(rawBase) as Record<string, unknown> : null;
+    } catch (error) {
+      console.warn('AgroBovino: metadatos de sincronización locales inválidos; se reconstruirán.', error);
+      this.pendingCloudSync = false;
+      this.cloudBaseState = null;
+    }
+  }
+
   private scheduleCloudSync(): void {
     if (this.cloudHydrating || typeof window === 'undefined') return;
     this.pendingCloudSync = true;
+    this.persistSyncMetadata();
     if (this.cloudSyncTimer) clearTimeout(this.cloudSyncTimer);
     this.cloudSyncTimer = setTimeout(() => { void this.syncToCloud(); }, 750);
   }
@@ -151,6 +178,7 @@ class StorageService {
       if (Number.isInteger(saved?.version)) this.cloudVersion = saved.version;
       this.cloudBaseState = state;
       this.pendingCloudSync = false;
+      this.persistSyncMetadata();
       return true;
     } catch (error) {
       console.warn('AgroBovino: conexión intermitente; los cambios quedan en cola local.', error);
@@ -169,6 +197,7 @@ class StorageService {
     if (typeof window === 'undefined') return 'failed';
     this.cloudReadMissing = false;
     this.cloudReadFailed = false;
+    this.restoreSyncMetadata();
     try {
       this.attachOnlineRetry();
       const hydrated = await this.hydrateFromCloud();
@@ -187,6 +216,7 @@ class StorageService {
         // Offline-first: si ya existe una copia sincronizada en este dispositivo,
         // se permite continuar y se reintenta automáticamente al volver Internet.
         this.pendingCloudSync = true;
+        this.persistSyncMetadata();
         return 'offline';
       }
 
@@ -195,6 +225,7 @@ class StorageService {
       console.warn('AgroBovino: no se pudo inicializar la persistencia cloud.', error);
       if (this.hasLocalCache()) {
         this.pendingCloudSync = true;
+        this.persistSyncMetadata();
         return 'offline';
       }
       return 'failed';
@@ -222,6 +253,7 @@ class StorageService {
       this.cloudVersion = Number.isInteger(payload.version) ? payload.version : null;
       this.cloudBaseState = payload.state as Record<string, unknown>;
       this.pendingCloudSync = false;
+      this.persistSyncMetadata();
       return this.importFullBackup(JSON.stringify(payload.state), false);
     } catch (error) {
       this.cloudReadFailed = true;
