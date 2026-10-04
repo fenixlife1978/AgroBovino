@@ -62,6 +62,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [cloudReady, setCloudReady] = useState(false);
   const [cloudError, setCloudError] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +81,7 @@ export default function App() {
         setAuthLoading(false);
         return;
       }
+      setOfflineMode(result === 'offline');
       setCloudReady(true);
       setFarm(storage.getFarm());
       setAnimals(storage.getAnimals());
@@ -184,6 +186,18 @@ export default function App() {
       setCurrentView('animals');
     }
   }, [searchQuery]);
+
+  useEffect(() => {
+    const handleOnline = () => setOfflineMode(false);
+    const handleOffline = () => setOfflineMode(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) setOfflineMode(true);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (user?.role === 'vaquero' && (currentView === 'inventory' || currentView === 'finance')) {
@@ -455,6 +469,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col selection:bg-emerald-500 selection:text-white antialiased">
+      {offlineMode && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 px-3 py-1.5 text-center text-xs font-semibold text-amber-950 shadow-md">
+          Sin conexión: AgroBovino continúa trabajando con la última copia sincronizada. Los cambios quedarán pendientes hasta recuperar Internet.
+        </div>
+      )}
+
+
       {/* Top Navigation Bar */}
       <Navbar
         farm={farm}
