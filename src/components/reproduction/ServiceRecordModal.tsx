@@ -30,12 +30,13 @@ export const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
   const [dryOffTreatment, setDryOffTreatment] = useState('Pomo intramamario de secado + sellador barrera');
   const [observations, setObservations] = useState('');
 
+  const selectedCow = females.find(f => f.id === animalId);
   const expectedCalving = eventType === 'servicio_ia'
     ? calculateExpectedCalvingDate(date)
     : (eventType === 'palpacion' || eventType === 'ecografia') && pregnancyStatus === 'positivo'
       ? calculateExpectedCalvingDate(
-          cow?.lastServiceDate || date,
-          cow?.lastServiceDate ? 283 : Math.max(1, 283 - Number(estimatedGestationDays))
+          selectedCow?.lastServiceDate || date,
+          selectedCow?.lastServiceDate ? 283 : Math.max(1, 283 - Number(estimatedGestationDays))
         )
       : '';
 
