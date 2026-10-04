@@ -27,11 +27,21 @@ function hasOwn(obj: Record<string, unknown>, key: string): boolean {
 function validateRoleWrite(role: 'admin' | 'vaquero', current: Record<string, unknown> | null, incoming: Record<string, unknown>): string | null {
   if (role === 'admin') return null;
   if (!current) return 'El estado inicial de la finca debe ser creado por un administrador.';
+
+  // The endpoint stores a complete state snapshot. A vaquero must therefore
+  // preserve every admin-only block exactly; otherwise an intentionally crafted
+  // request could omit a protected block and replace/delete it.
   for (const key of ADMIN_ONLY_KEYS) {
-    if (hasOwn(incoming, key) && JSON.stringify(incoming[key]) !== JSON.stringify(current[key])) return `El rol vaquero no puede modificar: ${key}.`;
+    if (!hasOwn(incoming, key)) return `El rol vaquero debe conservar el bloque protegido: ${key}.`;
+    if (JSON.stringify(incoming[key]) !== JSON.stringify(current[key])) {
+      return `El rol vaquero no puede modificar: ${key}.`;
+    }
   }
+
   for (const key of Object.keys(incoming)) {
-    if (!VAQUERO_ALLOWED_KEYS.has(key) && !ADMIN_ONLY_KEYS.has(key)) return `El rol vaquero no puede modificar el bloque: ${key}.`;
+    if (!VAQUERO_ALLOWED_KEYS.has(key) && !ADMIN_ONLY_KEYS.has(key)) {
+      return `El rol vaquero no puede modificar el bloque: ${key}.`;
+    }
   }
   return null;
 }
