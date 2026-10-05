@@ -14,7 +14,8 @@ export type NavView =
   | 'finance'
   | 'tasks'
   | 'reports'
-  | 'calculators';
+  | 'calculators'
+  | 'users';
 
 interface SidebarProps {
   currentView: NavView;
@@ -122,6 +123,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Reportes Oficiales',
       icon: FileSpreadsheet,
       description: 'Censo ICA/SENASA y guías'
+    },
+    {
+      id: 'users',
+      label: 'Usuarios',
+      icon: LayoutDashboard,
+      description: 'Usuarios, roles y accesos'
     },
     {
       id: 'calculators',
