@@ -730,6 +730,34 @@ export default function App() {
                 reloadData();
               }}
               onSaveRotation={(rotation) => {
+                // La rotación formal mueve únicamente los animales del lote
+                // confirmado que realmente estaban en el potrero de origen.
+                const updatedAnimals = animals.map(animal => {
+                  if (
+                    animal.lotName === rotation.lotName &&
+                    animal.pastureId === rotation.sourcePastureId
+                  ) {
+                    return { ...animal, pastureId: rotation.targetPastureId };
+                  }
+                  return animal;
+                });
+                storage.saveAnimals(updatedAnimals);
+
+                const updatedPastures = pastures.map(pasture => {
+                  if (pasture.id === rotation.sourcePastureId) {
+                    return { ...pasture, status: 'descanso' as const, daysOccupied: 0 };
+                  }
+                  if (pasture.id === rotation.targetPastureId) {
+                    return {
+                      ...pasture,
+                      status: 'ocupado' as const,
+                      entryDate: rotation.date,
+                      daysOccupied: 1
+                    };
+                  }
+                  return pasture;
+                });
+                storage.savePastures(updatedPastures);
                 storage.addHerdRotation(rotation);
                 reloadData();
               }}
