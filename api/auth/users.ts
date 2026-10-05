@@ -1,4 +1,4 @@
-import { createUser, deleteUser, listUsers, requireAdmin, setUserActive, updateUserPassword, type UserRole } from '../_lib/auth.js';
+import { createUser, deleteUser, listUsers, requireAdmin, setUserActive, setUserRole, updateUserPassword, type UserRole } from '../_lib/auth.js';
 
 function validRole(value: unknown): value is UserRole {
   return value === 'admin' || value === 'vaquero';
@@ -32,6 +32,10 @@ export default async function handler(req: any, res: any) {
         if (target?.role === 'admin' && current.filter(user => user.role === 'admin' && user.active).length <= 1) return res.status(400).json({ error: 'No se puede desactivar al último administrador.' });
       }
       if (typeof req.body?.active === 'boolean') await setUserActive(username, req.body.active);
+      if (req.body?.role !== undefined) {
+        if (!validRole(req.body.role)) return res.status(400).json({ error: 'Rol inválido.' });
+        await setUserRole(username, req.body.role);
+      }
       if (req.body?.password !== undefined) {
         const password = String(req.body.password);
         if (password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });
