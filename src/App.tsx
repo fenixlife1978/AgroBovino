@@ -483,6 +483,18 @@ export default function App() {
       status: 'aplicado'
     };
     storage.addHealthRecord(batchHealthRecord);
+    storage.addTransaction({
+      id: `tx-health-${batchHealthRecord.id}`,
+      relatedRecordId: batchHealthRecord.id,
+      date: batchHealthRecord.date,
+      type: 'egreso',
+      category: 'compra_medicamentos',
+      amount: batchHealthRecord.cost,
+      concept: `Vacunación masiva: ${vaccineName} (${batchSelectedAnimals.length} bovinos)`,
+      quantity: batchSelectedAnimals.length,
+      unitPrice: 2.5,
+      paymentStatus: 'pagado'
+    });
     reloadData();
     setBatchSelectedAnimals([]);
   };
