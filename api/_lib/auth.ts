@@ -126,7 +126,30 @@ export async function listUsers(): Promise<ManagedUser[]> {
   return result.rows.map((row: any) => ({ username: String(row.username), role: row.role === 'admin' ? 'admin' : 'vaquero', active: Number(row.active) === 1, createdAt: String(row.created_at) }));
 }
 export async function createUser(username: string, password: string, role: UserRole): Promise<void> { const db = getDb(); await ensureSeedAdmin(); await db.execute({ sql: 'INSERT INTO app_users (username, role, password, active, created_at) VALUES (?, ?, ?, 1, ?)', args: [username, role, hashPassword(password), new Date().toISOString()] }); }
-export async function setUserActive(username: string, active: boolean): Promise<void> { const db = getDb(); await db.execute({ sql: 'UPDATE app_users SET active = ? WHERE username = ?', args: [active ? 1 : 0, username] }); }
+export async function setUserActive(username: string, active: boolean): Promise<void> {
+  const db = getDb();
+  if (!active) {
+    const target = await db.execute({ sql: 'SELECT role FROM app_users WHERE username = ? LIMIT 1', args: [username] });
+    const role = String((target.rows[0] as any)?.role || '');
+    if (role === 'admin') {
+      const admins = await db.execute({ sql: "SELECT COUNT(*) AS total FROM app_users WHERE role = 'admin' AND active = 1", args: [] });
+      if (Number((admins.rows[0] as any)?.total || 0) <= 1) throw new Error('No se puede desactivar al último administrador.');
+    }
+  }
+  await db.execute({ sql: 'UPDATE app_users SET active = ? WHERE username = ?', args: [active ? 1 : 0, username] });
+}
+export async function setUserRole(username: string, role: UserRole): Promise<void> {
+  const db = getDb();
+  const target = await db.execute({ sql: 'SELECT role, active FROM app_users WHERE username = ? LIMIT 1', args: [username] });
+  const currentRole = String((target.rows[0] as any)?.role || '');
+  const active = Number((target.rows[0] as any)?.active || 0) === 1;
+  if (!currentRole) throw new Error('El usuario no existe.');
+  if (currentRole === 'admin' && role !== 'admin' && active) {
+    const admins = await db.execute({ sql: "SELECT COUNT(*) AS total FROM app_users WHERE role = 'admin' AND active = 1", args: [] });
+    if (Number((admins.rows[0] as any)?.total || 0) <= 1) throw new Error('No se puede quitar el rol del último administrador.');
+  }
+  await db.execute({ sql: 'UPDATE app_users SET role = ? WHERE username = ?', args: [role, username] });
+}
 export async function updateUserPassword(username: string, password: string): Promise<void> { const db = getDb(); await ensureSeedAdmin(); await db.execute({ sql: 'UPDATE app_users SET password = ? WHERE username = ?', args: [hashPassword(password), username] }); }
 export async function deleteUser(username: string): Promise<void> {
   const db = getDb(); const target = await db.execute({ sql: 'SELECT username, role FROM app_users WHERE username = ? LIMIT 1', args: [username] }); const row = target.rows[0] as { username?: string; role?: string } | undefined;
