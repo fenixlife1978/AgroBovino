@@ -96,10 +96,18 @@ export const HerdRotationModal: React.FC<HerdRotationModalProps> = ({
   }, [animals, selectedLotName, sourcePastureId]);
 
   const discrepancy = countedHeads - expectedHeads;
+  const lotAnimalsInSource = animals.filter(
+    animal => animal.lotName === selectedLotName && animal.pastureId === sourcePastureId
+  ).length;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sourcePastureId || !targetPastureId || sourcePastureId === targetPastureId) return;
+    if (
+      !sourcePastureId ||
+      !targetPastureId ||
+      sourcePastureId === targetPastureId ||
+      lotAnimalsInSource === 0
+    ) return;
 
     const rotationRecord: HerdRotationRecord = {
       id: `rot-${Date.now()}`,
@@ -188,7 +196,9 @@ export const HerdRotationModal: React.FC<HerdRotationModalProps> = ({
               onChange={e => setSourcePastureId(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-bold focus:bg-white focus:outline-none focus:border-emerald-500"
             >
-              {pastures.map(p => (
+              {pastures
+                .filter(p => p.id === currentLotInfo?.pastureId || p.id === sourcePastureId)
+                .map(p => (
                 <option key={p.id} value={p.id}>
                   {p.code} - {p.name} ({p.grassType})
                 </option>
@@ -407,7 +417,7 @@ export const HerdRotationModal: React.FC<HerdRotationModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={!targetPastureId || sourcePastureId === targetPastureId}
+              disabled={!targetPastureId || sourcePastureId === targetPastureId || lotAnimalsInSource === 0}
               className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl shadow-sm shadow-emerald-600/30 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <MoveRight className="w-4 h-4" />
