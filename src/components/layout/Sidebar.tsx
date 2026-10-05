@@ -178,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Módulos Operativos
           </div>
 
-          {navItems.filter(item => role === 'admin' || !['inventory', 'finance'].includes(item.id)).map((item) => {
+          {navItems.filter(item => role === 'admin' || ['dashboard', 'animals', 'dairy', 'reproduction', 'beef', 'health', 'pastures', 'tasks'].includes(item.id)).map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
 
