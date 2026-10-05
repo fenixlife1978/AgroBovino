@@ -55,7 +55,10 @@ export const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
       inseminator: eventType === 'servicio_ia' || eventType === 'ecografia' || eventType === 'palpacion' ? inseminator : undefined,
       pregnancyStatus: eventType === 'palpacion' || eventType === 'ecografia' ? pregnancyStatus : undefined,
       estimatedGestationDays: (eventType === 'palpacion' || eventType === 'ecografia') && pregnancyStatus === 'positivo' ? Number(estimatedGestationDays) : undefined,
-      expectedCalvingDate: (eventType === 'servicio_ia' || (eventType === 'palpacion' && pregnancyStatus === 'positivo')) ? expectedCalving : undefined,
+      expectedCalvingDate: (
+        eventType === 'servicio_ia' ||
+        ((eventType === 'palpacion' || eventType === 'ecografia') && pregnancyStatus === 'positivo')
+      ) ? expectedCalving : undefined,
       dryOffTreatment: eventType === 'secado' ? dryOffTreatment : undefined,
       observations: observations.trim() || undefined
     };
