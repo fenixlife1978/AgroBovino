@@ -591,6 +591,17 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 lg:pl-72 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full transition-all">
+          {currentView === 'users' && user.role === 'admin' && (
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div><h2 className="text-xl font-extrabold text-slate-900">Usuarios y accesos</h2><p className="text-sm text-slate-500 mt-1">Crea, activa, desactiva, cambia contraseñas y elimina usuarios de AgroBovino.</p></div>
+                  <button onClick={() => setIsUserManagementOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">👥 Administrar usuarios</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {currentView === 'dashboard' && (
             user.role === 'vaquero' ? (
               <VaqueroDashboard
