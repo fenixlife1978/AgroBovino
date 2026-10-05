@@ -36,6 +36,18 @@ export const UserManagementModal: React.FC<{ isOpen: boolean; onClose: () => voi
     } catch (e: any) { setError(e.message); } finally { setLoading(false); }
   };
 
+  const changeRole = async (user: ManagedUser) => {
+    const next = window.prompt('Rol (admin o vaquero):', user.role);
+    if (!next || !['admin', 'vaquero'].includes(next)) return;
+    setError(''); setLoading(true);
+    try {
+      const response = await fetch('/api/auth/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: user.username, role: next }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || 'No se pudo cambiar el rol.');
+      setUsers(data.users || []);
+    } catch (e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+
   const toggle = async (user: ManagedUser) => {
     setError(''); setLoading(true);
     try {
@@ -91,7 +103,7 @@ export const UserManagementModal: React.FC<{ isOpen: boolean; onClose: () => voi
                 <td className="p-3">{user.active ? <span className="text-emerald-700 font-semibold">Activo</span> : <span className="text-slate-400 font-semibold">Inactivo</span>}</td>
                 <td className="p-3"><div className="flex justify-end gap-1">
                   <button onClick={() => void toggle(user)} disabled={loading} className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-30" title={user.active ? 'Desactivar' : 'Activar'}>{user.active ? <UserX className="w-4 h-4 text-amber-600" /> : <UserCheck className="w-4 h-4 text-emerald-600" />}</button>
-                  <button onClick={() => void resetPassword(user)} disabled={loading} className="p-2 rounded-lg hover:bg-slate-100" title="Cambiar contraseña"><KeyRound className="w-4 h-4 text-slate-600" /></button>
+                  <button onClick={() => void changeRole(user)} disabled={loading} className="p-2 rounded-lg hover:bg-slate-100" title="Cambiar rol">🎭</button><button onClick={() => void resetPassword(user)} disabled={loading} className="p-2 rounded-lg hover:bg-slate-100" title="Cambiar contraseña"><KeyRound className="w-4 h-4 text-slate-600" /></button>
                   <button onClick={() => void remove(user)} disabled={loading || (user.username === 'admin' && users.filter(u => u.role === 'admin' && u.active).length <= 1)} className="p-2 rounded-lg hover:bg-rose-50 disabled:opacity-30" title="Eliminar"><Trash2 className="w-4 h-4 text-rose-600" /></button>
                 </div></td>
               </tr>)}
