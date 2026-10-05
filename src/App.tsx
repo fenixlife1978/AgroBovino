@@ -27,6 +27,7 @@ import { Sidebar, NavView } from './components/layout/Sidebar';
 
 // Views
 import { DashboardView } from './components/dashboard/DashboardView';
+import { VaqueroDashboard } from './components/dashboard/VaqueroDashboard';
 import { AnimalsView } from './components/animals/AnimalsView';
 import { DairyView } from './components/dairy/DairyView';
 import { ReproductionView } from './components/reproduction/ReproductionView';
@@ -200,7 +201,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user?.role === 'vaquero' && (currentView === 'inventory' || currentView === 'finance')) {
+    if (user?.role === 'vaquero' && !['dashboard', 'animals', 'dairy', 'reproduction', 'beef', 'health', 'pastures', 'tasks'].includes(currentView)) {
       setCurrentView('dashboard');
     }
   }, [user, currentView]);
