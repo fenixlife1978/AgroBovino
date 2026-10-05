@@ -592,42 +592,76 @@ export default function App() {
         {/* Main Content Area */}
         <main className="flex-1 lg:pl-72 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full transition-all">
           {currentView === 'dashboard' && (
-            <DashboardView
-              farm={farm}
-              animals={animals}
-              milkRecords={milkRecords}
-              weightRecords={weightRecords}
-              reproductionEvents={reproductionEvents}
-              healthRecords={healthRecords}
-              pastures={pastures}
-              inventory={inventory}
-              transactions={transactions}
-              tasks={tasks}
-              paddockNovelties={paddockNovelties}
-              onNavigate={(view) => setCurrentView(view)}
-              onOpenNewAnimal={() => {
-                setEditingAnimal(null);
-                setIsAnimalFormOpen(true);
-              }}
-              onOpenNewMilking={() => {
-                setMilkingPreselectedAnimal(null);
-                setIsMilkingModalOpen(true);
-              }}
-              onOpenNewWeighing={() => {
-                setWeighingPreselectedAnimal(null);
-                setIsWeighingModalOpen(true);
-              }}
-              onOpenNewService={() => {
-                setServicePreselectedAnimal(null);
-                setIsServiceModalOpen(true);
-              }}
-              onOpenNewTreatment={() => {
-                setTreatmentPreselectedAnimal(null);
-                setIsTreatmentModalOpen(true);
-              }}
-              onOpenRfidScanner={() => setIsRfidScannerOpen(true)}
-              onSelectAnimal={(animal) => setSelectedAnimalForDetail(animal)}
-            />
+            user.role === 'vaquero' ? (
+              <VaqueroDashboard
+                farm={farm}
+                animals={animals}
+                milkRecords={milkRecords}
+                weightRecords={weightRecords}
+                healthRecords={healthRecords}
+                pastures={pastures}
+                tasks={tasks}
+                onNavigate={(view) => setCurrentView(view)}
+                onOpenNewAnimal={() => {
+                  setEditingAnimal(null);
+                  setIsAnimalFormOpen(true);
+                }}
+                onOpenNewMilking={() => {
+                  setMilkingPreselectedAnimal(null);
+                  setIsMilkingModalOpen(true);
+                }}
+                onOpenNewWeighing={() => {
+                  setWeighingPreselectedAnimal(null);
+                  setIsWeighingModalOpen(true);
+                }}
+                onOpenNewService={() => {
+                  setServicePreselectedAnimal(null);
+                  setIsServiceModalOpen(true);
+                }}
+                onOpenNewTreatment={() => {
+                  setTreatmentPreselectedAnimal(null);
+                  setIsTreatmentModalOpen(true);
+                }}
+                onOpenRfidScanner={() => setIsRfidScannerOpen(true)}
+              />
+            ) : (
+              <DashboardView
+                farm={farm}
+                animals={animals}
+                milkRecords={milkRecords}
+                weightRecords={weightRecords}
+                reproductionEvents={reproductionEvents}
+                healthRecords={healthRecords}
+                pastures={pastures}
+                inventory={inventory}
+                transactions={transactions}
+                tasks={tasks}
+                paddockNovelties={paddockNovelties}
+                onNavigate={(view) => setCurrentView(view)}
+                onOpenNewAnimal={() => {
+                  setEditingAnimal(null);
+                  setIsAnimalFormOpen(true);
+                }}
+                onOpenNewMilking={() => {
+                  setMilkingPreselectedAnimal(null);
+                  setIsMilkingModalOpen(true);
+                }}
+                onOpenNewWeighing={() => {
+                  setWeighingPreselectedAnimal(null);
+                  setIsWeighingModalOpen(true);
+                }}
+                onOpenNewService={() => {
+                  setServicePreselectedAnimal(null);
+                  setIsServiceModalOpen(true);
+                }}
+                onOpenNewTreatment={() => {
+                  setTreatmentPreselectedAnimal(null);
+                  setIsTreatmentModalOpen(true);
+                }}
+                onOpenRfidScanner={() => setIsRfidScannerOpen(true)}
+                onSelectAnimal={(animal) => setSelectedAnimalForDetail(animal)}
+              />
+            )
           )}
 
           {currentView === 'animals' && (
